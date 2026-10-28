@@ -1,0 +1,26 @@
+name: checks
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install Python packages and headless Chromium
+        run: |
+          pip install -r requirements.txt
+          python -m playwright install --with-deps chromium
+      - name: The reference, and small mazes in both timings, checked against Dijkstra in Chromium
+        run: pytest -q tests
+      - name: Syncbase mazes inside a plain <img>, the way the README shows one
+        run: python tests/img_check.py --timing syncbase --tag img
+      - name: The committed examples are what examples/build.py writes
+        run: |
+          python examples/build.py
+          git diff --exit-code examples/

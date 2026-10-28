@@ -1,0 +1,3 @@
+playwright>=1.48   # only for the checks; the compiler needs nothing outside the standard library
+pytest
+pillow             # tests/img_check.py reads the colours of the screenshot

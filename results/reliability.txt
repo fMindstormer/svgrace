@@ -1,0 +1,11 @@
+== clocked, 24x16, loops 0.15, tick 0.1, 20 mazes (realtime, DOM)
+20 of 20 mazes computed exactly (clocked timing, realtime, Chromium 141.0.7390.37)
+== clocked, 40x30, loops 0.15, tick 0.15, 3 mazes
+seed 0: FAIL (33.2 s, 1200 cells, 11470 elements, largest offset from the tick grid 67 ms)
+seed 1: OK (26.9 s, 1200 cells, 11470 elements, largest offset from the tick grid 50 ms)
+seed 2: FAIL (34.3 s, 1200 cells, 11470 elements, largest offset from the tick grid 67 ms)
+1 of 3 mazes computed exactly (clocked timing, realtime, Chromium 141.0.7390.37)
+== syncbase, 24x16 perfect mazes, 30 mazes (seek)
+30 of 30 mazes computed exactly (syncbase timing, seek, Chromium 141.0.7390.37)
+== syncbase, 12x9, loops 0.15, 30 mazes (seek)
+30 of 30 mazes computed exactly (syncbase timing, seek, Chromium 141.0.7390.37)

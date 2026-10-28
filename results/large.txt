@@ -1,0 +1,5 @@
+== clocked, 40x30, loops 0.15, tick 0.3, 3 mazes
+seed 0: OK (54.1 s, 1200 cells, 11468 elements, largest offset from the tick grid 49 ms)
+seed 1: OK (42.4 s, 1200 cells, 11468 elements, largest offset from the tick grid 49 ms)
+seed 2: OK (53.2 s, 1200 cells, 11468 elements, largest offset from the tick grid 32 ms)
+3 of 3 mazes computed exactly (clocked timing, realtime, Chromium 141.0.7390.37)

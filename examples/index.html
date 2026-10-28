@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>svgrace</title>
+<style>
+  :root { color-scheme: light dark; --bg: #faf8f3; --fg: #23221f; --muted: #6b675e; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #1d1c1a; --fg: #ece9e1; --muted: #a39f95; } }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, sans-serif; }
+  main { max-width: 720px; margin: 0 auto; padding: 32px 16px; }
+  h1 { font-size: 1.6rem; margin: 0 0 .4rem; }
+  p { margin: .4rem 0 1rem; } .muted { color: var(--muted); font-size: .9rem; }
+  object { width: 100%; height: auto; aspect-ratio: 452 / 308; display: block; border-radius: 6px; }
+  a { color: inherit; }
+</style></head>
+<body><main>
+<h1>A maze that solves itself</h1>
+<p>No script runs on this page. Each cell of the maze is an SVG animation that begins when its cheapest
+neighbour's begins, plus the cost of stepping onto it, so the browser's animation scheduler settles the
+cells in order of distance. The wave you see is that order. When it reaches the exit, a trace runs back
+along the winning passages and lights every cheapest route in gold.</p>
+<object data="maze.svg" type="image/svg+xml" aria-label="A maze; a coloured wave spreads from S, and a gold route then appears from E back to S"></object>
+<p class="muted">Darker cells cost more to cross. Reload to run it again.
+<a href="https://github.com/fMindstormer/svgrace">How it works</a></p>
+</main></body></html>
