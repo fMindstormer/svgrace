@@ -35,12 +35,15 @@ def main(w=24, h=16, seeds=(0, 1, 2), tick=0.1, timing="syncbase", loops=0.0, ta
             gold = set()
             for i in range(m.cells):
                 x, y = m.xy(i)
-                r, g, bl = img.getpixel((margin + x * cell + 5, margin + y * cell + 5))
+                # near the corner: clear of the walls (1.5 px into the cell) and of the S and E labels, whose
+                # width depends on the system's sans-serif
+                r, g, bl = img.getpixel((margin + x * cell + 3, margin + y * cell + 3))
                 if abs(r - 0xff) < 12 and abs(g - 0xd1) < 12 and abs(bl - 0x66) < 12:
                     gold.add(i)
             good = gold == path
             ok += good
-            print(f"seed {seed}: <{tag}> shows {len(gold)} gold cells, cheapest routes cover {len(path)}: {'OK' if good else 'MISMATCH'}")
+            print(f"seed {seed}: <{tag}> shows {len(gold)} gold cells, cheapest routes cover {len(path)}: {'OK' if good else 'MISMATCH'}"
+                  + ("" if good else f"\n    missing {sorted(m.xy(i) for i in path - gold)[:5]}, extra {sorted(m.xy(i) for i in gold - path)[:5]}"))
         b.close()
     print(f"{ok} of {len(seeds)} {timing} mazes (loops {loops}) drew exactly the cheapest routes inside an <{tag}>")
     return ok == len(seeds)
