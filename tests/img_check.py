@@ -7,7 +7,7 @@ from playwright.sync_api import sync_playwright
 from svgrace import generate, compile_svg, shortest_path_cells
 from svgrace.check import duration
 
-def main(w=24, h=16, seeds=(0, 1, 2), tick=0.1, timing="syncbase", loops=0.0, tag="img"):
+def main(w=24, h=16, seeds=(0, 1, 2), tick=0.1, timing="syncbase", loops=0.0, tag="img", engine="chromium"):
     root = Path(tempfile.mkdtemp())
     class Quiet(http.server.SimpleHTTPRequestHandler):
         def log_message(self, *a): pass
@@ -16,7 +16,8 @@ def main(w=24, h=16, seeds=(0, 1, 2), tick=0.1, timing="syncbase", loops=0.0, ta
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     ok = 0
     with sync_playwright() as p:
-        b = p.chromium.launch()
+        b = getattr(p, engine).launch()
+        version = b.version
         for seed in seeds:
             m = generate(w, h, seed, loops=loops)
             svg, info = compile_svg(m, tick=tick, timing=timing)
@@ -45,14 +46,14 @@ def main(w=24, h=16, seeds=(0, 1, 2), tick=0.1, timing="syncbase", loops=0.0, ta
             print(f"seed {seed}: <{tag}> shows {len(gold)} gold cells, cheapest routes cover {len(path)}: {'OK' if good else 'MISMATCH'}"
                   + ("" if good else f"\n    missing {sorted(m.xy(i) for i in path - gold)[:5]}, extra {sorted(m.xy(i) for i in gold - path)[:5]}"))
         b.close()
-    print(f"{ok} of {len(seeds)} {timing} mazes (loops {loops}) drew exactly the cheapest routes inside an <{tag}>")
+    print(f"{ok} of {len(seeds)} {timing} mazes (loops {loops}) drew exactly the cheapest routes inside an <{tag}> ({engine} {version})")
     return ok == len(seeds)
 
 if __name__ == "__main__":
     import argparse
     ap = argparse.ArgumentParser()
-    ap.add_argument("--timing", default="syncbase"); ap.add_argument("--tag", default="img")
+    ap.add_argument("--timing", default="syncbase"); ap.add_argument("--tag", default="img"); ap.add_argument("--engine", default="chromium")
     ap.add_argument("--loops", type=float, default=0.0); ap.add_argument("--tick", type=float, default=0.1)
     ap.add_argument("--size", default="24x16"); ap.add_argument("--seeds", type=int, default=3)
     a = ap.parse_args(); w, h = map(int, a.size.split("x"))
-    sys.exit(0 if main(w, h, range(a.seeds), a.tick, a.timing, a.loops, a.tag) else 1)
+    sys.exit(0 if main(w, h, range(a.seeds), a.tick, a.timing, a.loops, a.tag, a.engine) else 1)

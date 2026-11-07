@@ -31,11 +31,11 @@ def browser():
 
 @pytest.mark.parametrize("seed", range(10))
 def test_syncbase_small_mazes_with_loops(browser, seed):
-    """Exact times by seeking: small enough that Chromium's ahead-of-time resolution stays fast."""
+    """Exact times, read with the clock paused: small enough that Chromium's ahead-of-time resolution stays fast."""
     m = generate(10, 7, seed)
     svg, info = compile_svg(m, timing="syncbase")
     page = browser.new_page()
-    R, T = run(page, svg, m, info, mode="seek")
+    R, T = run(page, svg, m, info, mode="paused")
     page.close()
     assert compare(m, info, R, T) == []
 

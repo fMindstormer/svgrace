@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>An interval whose begin and end are the same time still ends, and its end propagates to syncbase dependents</title>
+<link rel="help" href="https://www.w3.org/TR/SMIL3/smil-timing.html#Timing-BehaviorOf0DurElements">
+<script src="/resources/testharness.js"></script>
+<script src="/resources/testharnessreport.js"></script>
+<!--
+  "Media elements with an active duration of zero or with the same begin and end time trigger begin and
+  end events, and propagate to time dependents." Here gate's interval runs from 1s to 1s, and dependent
+  begins at gate.end, so dependent's interval begins at 1s. Every time involved is a syncbase or offset
+  time, so it is resolved as soon as the document has loaded.
+-->
+<svg width="100" height="100">
+  <rect width="10" height="10">
+    <set id="offsets" attributeName="x" to="0" begin="1s" end="1s" restart="never"/>
+    <set id="offsets-dependent" attributeName="x" to="0" begin="offsets.end" restart="never"/>
+  </rect>
+  <rect y="20" width="10" height="10">
+    <set id="a" attributeName="x" to="0" begin="0s" dur="10s" restart="never"/>
+    <set id="b" attributeName="x" to="0" begin="0s" dur="10s" restart="never"/>
+    <set id="syncbases" attributeName="x" to="0" begin="a.begin+1s" end="b.begin+1s" restart="never"/>
+    <set id="syncbases-dependent" attributeName="x" to="0" begin="syncbases.end" restart="never"/>
+  </rect>
+</svg>
+<script>
+  // The timeline starts after the load event; two animation frames later every interval here is resolved.
+  const loaded = new Promise(resolve => window.addEventListener("load", resolve))
+    .then(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+
+  for (const [gate, kind] of [["offsets", "offset values"], ["syncbases", "syncbase values"]]) {
+    promise_test(async () => {
+      await loaded;
+      document.querySelector("svg").pauseAnimations();
+      assert_equals(document.getElementById(gate).getStartTime(), 1, "the zero-duration interval begins at 1s");
+      assert_equals(document.getElementById(`${gate}-dependent`).getStartTime(), 1, "the dependent begins at its end");
+    }, `A zero-duration interval from ${kind} ends, and a dependent on its end begins`);
+  }
+</script>

@@ -15,8 +15,8 @@ terrain, on a page with no script. Reload to run it again.
 the scheduler is settling; the gold route is the cheapest way from S to E (darker cells cost more).*
 
 The maze below is the file itself, not a recording. GitHub shows it through a plain `<img>`, where no
-script can run, and the browser computes its route as the page loads (checked in Chromium; reload the
-page to run it again):
+script can run, and the browser computes its route as the page loads (checked in Chromium, Firefox and
+WebKit; reload the page to run it again):
 
 ![A maze that solves itself: a wave spreads from S and a gold route appears from E back to S](examples/maze-readme.svg)
 
@@ -58,20 +58,29 @@ passages only, so it lights exactly the cells on cheapest routes, and all of the
 
 SMIL has two ways to make one animation follow another, and Chromium treats them very differently.
 
-**Syncbase timing** (`R56.begin+0.2s`) is exact: the times are pure arithmetic. But the engine resolves
+**Syncbase timing** (`R56.begin+0.2s`) is exact: the times are pure arithmetic. But Chromium resolves
 them ahead of the clock, as soon as the document loads, by propagating every improvement through the
-dependency graph. That is the textbook worst case of label-correcting shortest-path algorithms, and the
-cost grows exponentially with the number of alternative routes:
+dependency graph at once, depth first. That is the textbook worst case of label-correcting shortest-path
+algorithms, and the cost grows exponentially with the number of alternative routes. Firefox and WebKit
+load the same files at once ([`tools/cliff.py`](tools/cliff.py), on one Apple-silicon Mac):
 
-| Maze | Cells | Loops | Load time in Chromium 141 |
-|---|---|---|---|
-| perfect maze (one route) | 384 | none | 0.13 s |
-| perfect maze | 640 | none | 0.84 s |
-| braid maze | 108 | 15% of walls removed | 0.07 s |
-| braid maze | 140 | 15% | 3.6 s |
-| braid maze | 176 | 15% | 72 s |
-| braid maze | 216 | 15% | over 5 minutes |
-| open grid (every passage) | 80 | all | over 2 minutes |
+| File | Timing | Chromium 156 | Firefox 157 | WebKit 27.2 |
+|---|---|---|---|---|
+| perfect maze 24×16 (384 cells, one route) | syncbase | 0.04 s | 0.09 s | 0.05 s |
+| perfect maze 32×20 (640 cells) | syncbase | 0.05 s | 0.11 s | 0.06 s |
+| braid maze 12×9 (108 cells, 15% of walls removed) | syncbase | 0.06 s | 0.11 s | 0.02 s |
+| braid maze 14×10 (140 cells) | syncbase | 2.49 s | 0.11 s | 0.02 s |
+| braid maze 16×11 (176 cells) | syncbase | 50.19 s | 0.12 s | 0.02 s |
+| the same maze | event-based | 0.03 s | 0.12 s | 0.03 s |
+| braid maze 40×30 (1,200 cells) | event-based | 0.10 s | 0.23 s | 0.12 s |
+| grid 5×5 (25 animations) | syncbase | 0.08 s | 0.10 s | 0.01 s |
+| grid 6×6 (36 animations) | syncbase | 15.09 s | 0.10 s | 0.02 s |
+| grid 7×7 (49 animations) | syncbase | over 100 s | 0.10 s | 0.01 s |
+
+The grids are the smallest form of it: k × k `<animate>`s, each beginning 0.1 s after the earliest of its
+neighbours, and nothing else. Repeated runs vary (12 to 15 s for the 6×6 grid, 50 to 80 s for the 176-cell
+maze). The cliff was first measured on Chromium 141 in a 2-core Linux container, where a 216-cell braid maze
+took over 5 minutes.
 
 **Event-based timing** (`R56.beginEvent+0.2s`) cannot be predicted: a time exists only once its event
 has fired, so the engine settles cells in clock order, the way Dijkstra's priority queue would, and the
@@ -89,12 +98,19 @@ behind, so the clock rate is limited by how fast the engine runs frames.
 
 ## Findings in Chromium
 
-- **Syncbase resolution is exponential** in the number of alternative routes (table above). Seeking
-  afterwards is instant: the cost is all in resolving the dependency graph at load.
+- **Syncbase resolution is exponential** in the number of alternative routes (table above). Thirty-six
+  animations in a 6×6 grid take 12 to 15 s to load, and shown through a plain `<img>` they hold up the
+  load of the page around them about as long. Seeking afterwards is instant: the cost is all in resolving
+  the dependency graph at load. A report with these files is drafted in [`upstream/chromium/`](upstream/chromium/).
+- **A zero-length interval never ends.** An interval whose begin and end are the same time does not exist
+  in Chromium, so nothing waiting for its end begins. SMIL 3.0 says such an element still ends and
+  "propagate[s] to time dependents", and Firefox and WebKit agree. svgrace's gates never meet an exact
+  tie: they end a quarter tick after the cell is reached.
 - **Event times are frame times.** An event-based time is the time of the frame that delivered the
-  event, not the time the event belonged to, so unclocked event chains drift.
+  event, not the time the event belonged to, so unclocked event chains drift. Firefox and WebKit drift
+  less, but none of the three is exact (below).
 - **No events inside `<img>`.** Chromium does not run event-based timing in an SVG shown as an image:
-  only the start cell animates. Syncbase timing does run there.
+  only the start cell animates. Syncbase timing does run there. Firefox and WebKit run both.
 - **The clock's speed limit.** On a 2-core container (headless Chromium, software rendering), with
   24×16 braid mazes (384 cells, about 3,650 timed elements), a tick of 0.1 s was exact in 20 of 20 runs
   and 0.08 s in 8 of 8; 0.06 s failed occasionally. At 40×30 (1,200 cells, about 11,470 elements)
@@ -105,41 +121,101 @@ So there are two builds. `--timing syncbase` on perfect mazes runs anywhere an S
 GitHub README. `--timing clocked` handles mazes with competing routes, in a page that embeds the SVG with
 `<object>` or inline, or opened directly.
 
+## Three engines
+
+The same checks in Playwright's builds of Chromium, Firefox and WebKit, on one Apple-silicon Mac:
+
+| Check | Chromium 156 | Firefox 157 | WebKit 27.2 |
+|---|---|---|---|
+| syncbase, 24×16 perfect mazes, times read at load | 30 of 30 | 30 of 30 | 30 of 30 |
+| syncbase, 12×9 braid mazes, times read at load | 30 of 30 | 30 of 30 | **3 of 30** |
+| clocked, 24×16 braid mazes, real time, 0.1 s tick | 10 of 10 | 10 of 10 | 10 of 10 |
+| syncbase inside `<img>`, the README case | 3 of 3 | 3 of 3 | 3 of 3 |
+| clocked inside `<object>`, the live page | 3 of 3 | 3 of 3 | 3 of 3 |
+
+The README maze and the live page compute the right answer in all three. WebKit's braid-maze failures are
+all in the trace, which lights cells off the cheapest routes. A winner gate whose end is corrected to
+before its begin keeps the interval it had, so its relay fires: in two failing 12×9 mazes, over a hundred
+gates that SMIL closes kept an interval in WebKit, and none did in Chromium. Chromium has the same flaw in
+another document order (probes below), one that svgrace's mazes do not produce.
+
+[`tools/engines.py`](tools/engines.py) probes the timing features svgrace uses one at a time, each against
+what SMIL 3.0 requires. Every probe element has `restart="never"`, as svgrace's do:
+
+| Probe | SMIL 3.0 | Chromium 156 | Firefox 157 | WebKit 27.2 |
+|---|---|---|---|---|
+| begin list takes the earliest | `begin="0.3s; 0.1s"` begins at 0.1 s | 0.1 | 0.1 | 0.1 |
+| open cycle | A `0s; B.begin+1s`, B `A.begin+1s`: A at 0, B at 1 | 0, 1 | 0, 1 | 0, 1 |
+| closed cycle | A `B.begin+1s`, B `A.begin+1s`: both unresolved | none, none | none, none | none, none |
+| gate, end after begin | W is 1 s to 1.5 s, X begins at 1.5 | 1.5 | 1.5 | 1.5 |
+| gate, end equals begin | a 0-length interval still ends and "propagate[s] to time dependents": X at 1 | **none** | 1 | 1 |
+| the same, clock running | X at 1 | **none** | 1 | 1 |
+| gate, end before begin | no interval, so X never begins | none | none | none |
+| gate, end corrected to before begin | "the interval must be pruned and all dependent instance times must be removed": X never begins | **0.5, 3** | 0.5, none | **0.5, 3** |
+| the same, elements in another order | X never begins | 0.5, none | 0.5, none | 0.5, none |
+| `restart="never"` while active | `begin="0s; 0.5s"`, 2 s long: at 1 s still the interval from 0 | 0 | 0 | 0 |
+| `restart="never"` after the end | `begin="0s; 3s"`, 1 s long: inactive at 3.5 s, width stays 10 | 10 | 10 | 10 |
+| the same two, after `setCurrentTime()` | a forward seek "should" leave the state playing would: 0, and 10 | 0, 10 | 0, 10 | **0.5, 15** |
+| `restart="always"` while active (control) | the first probe with restart="always": restarted at 0.5 | 0.5 | 0.5 | 0.5 |
+| event-based chain | `prev.beginEvent+0.1s`, 20 hops: an event's time is "the earliest time that the event could be raised" (largest error) | **67 to 100 ms** | **3 to 48 ms** | **28 to 35 ms** |
+| `getStartTime()` after the interval ends | 0.5 s long, read at 1 s: unspecified (SVG 1.1 throws without a "current interval") | 0 | none | 0 |
+| syncbase timing inside `<img>` | SVG Integration: "declarative animation: yes" in an image; the chain turns it red | red | red | red |
+| event-based timing inside `<img>` | the same chain with `beginEvent` | **teal** | red | red |
+
+Bold: differs from SMIL 3.0. The event-based chain is given over four runs.
+
+- **Event times.** SMIL defines an event's time as "the earliest time that the event could be raised",
+  which would make unclocked event chains exact. None of the three engines does that, so the clock is what
+  makes the clocked build exact in all three.
+- **Seeking.** WebKit's `setCurrentTime()` restarts `restart="never"` elements that playing to the same
+  time does not.
+- **Reading the answer.** Once an interval has ended, Firefox's `getStartTime()` throws where Chromium and
+  WebKit still answer, and the specification does not say which is right, so the checker reads the times
+  while the race runs. Reading too often has its own cost: every half second, reading a 24×16 maze held up
+  Firefox's main thread enough that clocked snaps missed their tick; every 2 s it does not.
+
+The two clearest disagreements are drafted as [web-platform-tests](upstream/wpt/) for `svg/animations`: a
+zero-length interval must end and propagate (Chromium fails), and a pruned interval must take back the
+times it gave its dependents (Chromium and WebKit fail, in one document order). Firefox passes both.
+
 ## How it is checked
 
 The checker never trusts the picture: it computes the answer separately (Dijkstra) and compares.
 
-| Claim | Evidence | Result (Chromium 141) |
-|---|---|---|
-| Every cell is reached at its cheapest cost | each `R`'s start time, read back with `getStartTime()`, rounded to whole ticks after the start cell's, equals Dijkstra's distance | clocked 24×16 with loops: 20 of 20 mazes; syncbase 24×16 perfect mazes: 30 of 30; syncbase 12×9 with loops: 30 of 30 |
-| The trace lights exactly the cheapest routes | the set of cells whose `T` began equals the set of cells on some cheapest route (from forward and backward Dijkstra) | the same runs |
-| It works where it will be shown | pixels after the race: gold cells must equal the route cells | syncbase inside `<img>`: 4 of 4; clocked inside `<object>`: 3 of 3 |
+| Claim | Evidence |
+|---|---|
+| Every cell is reached at its cheapest cost | each `R`'s start time, read back with `getStartTime()`, rounded to whole ticks after the start cell's, equals Dijkstra's distance |
+| The trace lights exactly the cheapest routes | the set of cells whose `T` began equals the set of cells on some cheapest route (from forward and backward Dijkstra) |
+| It works where it will be shown | pixels after the race: gold cells must equal the route cells |
 
-Rechecked in October 2026 on Chromium 156 (Playwright 1.64, an Apple-silicon Mac): clocked 24×16 with
-loops, 5 of 5 mazes; syncbase inside `<img>`, 3 of 3; clocked inside `<object>`, 3 of 3. The load-time
-table was not measured again.
+The results in each engine are in [Three engines](#three-engines). Before that, on Chromium 141 in a
+2-core Linux container: clocked 24×16 with loops, 20 of 20 mazes; syncbase 24×16 perfect mazes, 30 of 30;
+syncbase 12×9 with loops, 30 of 30; syncbase inside `<img>`, 4 of 4; clocked inside `<object>`, 3 of 3.
 
 ```sh
-pip install -r requirements.txt && python -m playwright install chromium
+pip install -r requirements.txt && python -m playwright install chromium firefox webkit
 python -m svgrace check 24 16 --seeds 20                    # clocked, real time
-python -m svgrace check 24 16 --seeds 30 --loops 0 --timing syncbase --mode seek
+python -m svgrace check 24 16 --seeds 30 --loops 0 --timing syncbase --mode paused --engine firefox
 python tests/img_check.py --timing syncbase --tag img       # the README case
+python tools/engines.py                                     # the probes, in all three engines
+python tools/cliff.py                                       # the load times
+python tools/wpt.py                                         # the web-platform-tests drafts
 python -m svgrace build 24 16 --seed 3 --out maze.svg       # make one
 ```
 
 ## Limits and next steps
 
-- **One engine.** Only Chromium was available here. Firefox and Safari implement SMIL timing
-  independently, so the same files are a conformance test of three schedulers: ties, cycles,
-  `restart="never"` and event timing are where they are most likely to disagree.
+- **Three builds on one machine.** The engines are Playwright's builds on an Apple-silicon Mac. Safari,
+  and Chrome and Firefox elsewhere, are not tested; Safari in particular may differ from Playwright's
+  WebKit.
 - **Mazes are the first program.** The same primitives compute edit distance (race logic's original
   application, DNA alignment) and sorting.
 - **Universality.** With cycles and restarts, the same elements make temporal state machines: a counter
   can be held as the offset between two looping pulses, incremented or decremented by delaying one of
   them, and tested for zero by which arrives first. That should make SMIL timing Turing complete up to
   the engine's time precision; the construction is not built yet.
-- **Report the cliff.** The exponential syncbase resolution is worth a Chromium bug with these files as
-  test cases.
+- **Upstream.** The Chromium report and the web-platform-tests are drafted in [`upstream/`](upstream/)
+  and not yet submitted.
 
 ## Prior art
 

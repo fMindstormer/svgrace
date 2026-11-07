@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>An interval whose end moves before its begin is pruned, and its dependents lose the instance times it gave them</title>
+<link rel="help" href="https://www.w3.org/TR/SMIL3/smil-timing.html#Timing-BeginEnd-LC-FirstWait">
+<script src="/resources/testharness.js"></script>
+<script src="/resources/testharnessreport.js"></script>
+<!--
+  In each group, gate begins at 1s and is ended by late.begin. late's begin list holds 3s (through far)
+  and 0.5s (through the two-step chain start, step), so late begins at 0.5s. An implementation that
+  resolves 3s first briefly gives gate the interval 1s to 3s; once 0.5s arrives, the end is before the
+  begin, so "the interval must be pruned and all dependent instance times must be removed from the
+  respective instance lists of dependent elements". dependent, which begins at gate.end, must have no
+  interval. The groups differ only in the document order of the chain. restart="never" everywhere, so
+  no element may legitimately begin twice.
+-->
+<svg width="100" height="100">
+  <rect width="10" height="10">
+    <set id="early1" attributeName="x" to="0" begin="0s" dur="10s" restart="never"/>
+    <set id="late1" attributeName="x" to="0" begin="far1.begin+3s; step1.begin+0.5s" dur="10s" restart="never"/>
+    <set id="gate1" attributeName="x" to="0" begin="early1.begin+1s" end="late1.begin" restart="never"/>
+    <set id="dependent1" attributeName="x" to="0" begin="gate1.end" restart="never"/>
+    <set id="far1" attributeName="x" to="0" begin="0s" dur="10s" restart="never"/>
+    <set id="start1" attributeName="x" to="0" begin="0s" dur="10s" restart="never"/>
+    <set id="step1" attributeName="x" to="0" begin="start1.begin" dur="10s" restart="never"/>
+  </rect>
+  <rect y="20" width="10" height="10">
+    <set id="step2" attributeName="x" to="0" begin="start2.begin" dur="10s" restart="never"/>
+    <set id="start2" attributeName="x" to="0" begin="0s" dur="10s" restart="never"/>
+    <set id="far2" attributeName="x" to="0" begin="0s" dur="10s" restart="never"/>
+    <set id="early2" attributeName="x" to="0" begin="0s" dur="10s" restart="never"/>
+    <set id="late2" attributeName="x" to="0" begin="far2.begin+3s; step2.begin+0.5s" dur="10s" restart="never"/>
+    <set id="gate2" attributeName="x" to="0" begin="early2.begin+1s" end="late2.begin" restart="never"/>
+    <set id="dependent2" attributeName="x" to="0" begin="gate2.end" restart="never"/>
+  </rect>
+</svg>
+<script>
+  // The timeline starts after the load event; two animation frames later every interval here is resolved.
+  const loaded = new Promise(resolve => window.addEventListener("load", resolve))
+    .then(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+
+  for (const [group, order] of [[1, "after"], [2, "before"]]) {
+    promise_test(async () => {
+      await loaded;
+      document.querySelector("svg").pauseAnimations();
+      assert_equals(document.getElementById(`late${group}`).getStartTime(), 0.5, "late begins at the earliest time in its begin list");
+      assert_throws_dom("InvalidStateError", () => document.getElementById(`dependent${group}`).getStartTime(),
+                        "the dependent has no interval");
+    }, `The dependent of a pruned interval has no interval (chain ${order} the gate in document order)`);
+  }
+</script>

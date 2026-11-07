@@ -1,12 +1,15 @@
 """Run a compiled SVG in a real browser engine and compare what its timing computed with Dijkstra.
 
-The SVG has no script. The checker only reads, afterwards, when each timed element began
+The SVG has no script. The checker only reads when each timed element began
 (SVGAnimationElement.getStartTime). Clocked SVGs run in real time; their answers are counted in clock
-ticks from the moment the start cell was reached.
+ticks from the moment the start cell was reached. The engine is Chromium, Firefox or WebKit, as
+Playwright builds them.
 """
 import time
 
 from .maze import dijkstra, shortest_path_cells
+
+ENGINES = {"chromium": "Chromium", "firefox": "Firefox", "webkit": "WebKit"}
 
 READ = """n => {
   const t = id => { const el = document.getElementById(id);
@@ -23,20 +26,34 @@ def duration(m, info):
     return info["start_at"] + info["tick"] * (max(dist) + 2) + info["trace_after"] + len(path) * (info["dt"] + 0.05) + 1.5
 
 
-def run(page, svg_text, m, info, mode="realtime"):
-    """Start times read back from the engine: (R list, T list), None where an element never began."""
+def run(page, svg_text, m, info, mode="realtime", poll=2.0):
+    """Start times read back from the engine: (R list, T list), None where an element never began.
+
+    paused: the clock is paused as soon as the document has loaded and the times are read then, which only
+    syncbase timing can answer, since it is resolved ahead of the clock. realtime: the clock runs until the
+    trace has certainly finished, and the times are read every `poll` seconds, keeping each element's latest
+    answer. Reading only at the end is not enough: Firefox stops reporting an element's start time once its
+    interval has ended. Reading too often is not either: every 0.5 s, reading a 24x16 maze held up Firefox's
+    main thread enough that clocked snaps missed their tick. Each R interval lasts the trail (6 s), so
+    reading every 2 s still sees every one."""
     page.set_content(svg_text)
+    if mode == "paused":
+        page.evaluate("() => document.querySelector('svg').pauseAnimations()")
+        got = page.evaluate(READ, m.cells)
+        return got["R"], got["T"]
     stop = duration(m, info)
-    if mode == "seek":
-        page.evaluate(f"() => {{ const s = document.querySelector('svg'); s.pauseAnimations(); s.setCurrentTime({stop}); }}")
-    else:
-        wall = time.time()
-        while (now := page.evaluate("() => document.querySelector('svg').getCurrentTime()")) < stop:
-            time.sleep(min(0.5, stop - now))
-            if time.time() - wall > 3 * stop + 30:
-                raise TimeoutError("the document clock did not advance")
-    got = page.evaluate(READ, m.cells)
-    return got["R"], got["T"]
+    R, T = [None] * m.cells, [None] * m.cells
+    wall = time.time()
+    while True:
+        now = page.evaluate("() => document.querySelector('svg').getCurrentTime()")
+        got = page.evaluate(READ, m.cells)
+        R = [new if new is not None else old for new, old in zip(got["R"], R)]
+        T = [new if new is not None else old for new, old in zip(got["T"], T)]
+        if now >= stop:
+            return R, T
+        time.sleep(min(poll, stop - now))
+        if time.time() - wall > 3 * stop + 30:
+            raise TimeoutError("the document clock did not advance")
 
 
 def compare(m, info, got_R, got_T):
