@@ -1,7 +1,8 @@
 name: pages
-# The live page, https://fmindstormer.github.io/svgrace/: examples/index.html embeds the clocked
-# examples/maze.svg with <object>, which event-based timing needs. Both are committed, and checks.yml
-# fails if examples/build.py would write them differently.
+# The live page, https://fmindstormer.github.io/svgrace/: examples/index.html plays the clocked
+# examples/maze.svg with <object>, which event-based timing needs, and examples/svgrace.js builds the SVG
+# of a maze drawn on it. checks.yml fails if examples/build.py would write maze.svg differently, or if
+# svgrace.js writes anything other than what the Python compiler writes.
 on:
   push:
     branches: [main]
@@ -21,7 +22,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - run: mkdir _site && cp examples/index.html examples/maze.svg _site/
+      - run: mkdir _site && cp examples/index.html examples/maze.svg examples/svgrace.js _site/
       - uses: actions/upload-pages-artifact@v3
       - id: deployment
         uses: actions/deploy-pages@v4

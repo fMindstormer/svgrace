@@ -4,8 +4,9 @@
 time, and the computer is the browser's animation scheduler, doing its ordinary job of deciding when
 each animation starts.
 
-**[Watch it run](https://fmindstormer.github.io/svgrace/)**: the clocked build, a maze with loops and
-terrain, on a page with no script. Reload to run it again.
+**[Try it](https://fmindstormer.github.io/svgrace/)**: watch a maze with loops and terrain solve itself,
+then draw your own. The page builds your maze's SVG in the browser and, once the race is over, reads the
+answer back and compares it with Dijkstra; the SVG it builds has no script.
 
 [![checks](https://github.com/fMindstormer/svgrace/actions/workflows/checks.yml/badge.svg)](https://github.com/fMindstormer/svgrace/actions/workflows/checks.yml)
 
@@ -187,6 +188,7 @@ The checker never trusts the picture: it computes the answer separately (Dijkstr
 | Every cell is reached at its cheapest cost | each `R`'s start time, read back with `getStartTime()`, rounded to whole ticks after the start cell's, equals Dijkstra's distance |
 | The trace lights exactly the cheapest routes | the set of cells whose `T` began equals the set of cells on some cheapest route (from forward and backward Dijkstra) |
 | It works where it will be shown | pixels after the race: gold cells must equal the route cells |
+| The live page builds the same SVG | its JavaScript port of the generator and compiler, [`examples/svgrace.js`](examples/svgrace.js), writes byte for byte what the Python writes, for generated and edited mazes; a maze drawn on the page finds its cheapest route ([`tests/test_page.py`](tests/test_page.py)) |
 
 The results in each engine are in [Three engines](#three-engines). Before that, on Chromium 141 in a
 2-core Linux container: clocked 24×16 with loops, 20 of 20 mazes; syncbase 24×16 perfect mazes, 30 of 30;
@@ -200,6 +202,7 @@ python tests/img_check.py --timing syncbase --tag img       # the README case
 python tools/engines.py                                     # the probes, in all three engines
 python tools/cliff.py                                       # the load times
 python tools/wpt.py                                         # the web-platform-tests drafts
+SVGRACE_ENGINES=chromium,firefox,webkit python -m pytest tests/test_page.py   # the live page
 python -m svgrace build 24 16 --seed 3 --out maze.svg       # make one
 ```
 

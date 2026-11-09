@@ -1,23 +1,244 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>svgrace</title>
+<meta name="description" content="An SVG with no script that solves its own maze. Draw a maze and watch the browser's animation timing find the cheapest route.">
 <style>
-  :root { color-scheme: light dark; --bg: #faf8f3; --fg: #23221f; --muted: #6b675e; }
-  @media (prefers-color-scheme: dark) { :root { --bg: #1d1c1a; --fg: #ece9e1; --muted: #a39f95; } }
+  :root { color-scheme: light dark; --bg: #faf8f3; --fg: #23221f; --muted: #6b675e; --line: #d4cebf;
+          --accent: #22577a; --accent-fg: #ffffff; --ok: #2a7146; --bad: #a8321f; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #1d1c1a; --fg: #ece9e1; --muted: #a39f95; --line: #48453f;
+            --accent: #8cc4e8; --accent-fg: #13212b; --ok: #85cf9f; --bad: #f2a497; } }
   body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, sans-serif; }
   main { max-width: 720px; margin: 0 auto; padding: 32px 16px; }
   h1 { font-size: 1.6rem; margin: 0 0 .4rem; }
-  p { margin: .4rem 0 1rem; } .muted { color: var(--muted); font-size: .9rem; }
-  object { width: 100%; height: auto; aspect-ratio: 452 / 308; display: block; border-radius: 6px; }
+  p { margin: .4rem 0 1rem; }
   a { color: inherit; }
+  .stage { position: relative; width: 100%; aspect-ratio: 452 / 308; border-radius: 6px; overflow: hidden;
+           background: #3b3a36; }
+  .stage > * { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  #editor { touch-action: none; cursor: crosshair; }
+  .status { min-height: 3em; margin: .6rem 0 .2rem; color: var(--muted); font-size: .92rem; }
+  .status.ok { color: var(--ok); } .status.bad { color: var(--bad); }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; margin: 0 0 1rem; }
+  .controls[hidden], .js-only { display: none; }
+  html.js .js-only:not([hidden]) { display: flex; }
+  button, select, .button { font: inherit; font-size: .95rem; color: var(--fg); background: transparent;
+           border: 1px solid var(--line); border-radius: 6px; padding: 5px 12px; cursor: pointer; text-decoration: none; }
+  button:hover, .button:hover, select:hover { border-color: var(--muted); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+  .seg label { position: relative; cursor: pointer; }
+  .seg input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+  .seg span { display: block; padding: 5px 12px; font-size: .95rem; }
+  .seg input:checked + span { background: var(--accent); color: var(--accent-fg); }
+  .seg input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: -2px; }
+  label.field { display: inline-flex; gap: 6px; align-items: center; font-size: .95rem; }
+  .muted { color: var(--muted); font-size: .9rem; }
+  code { font-size: .85em; }
 </style></head>
 <body><main>
 <h1>A maze that solves itself</h1>
-<p>No script runs on this page. Each cell of the maze is an SVG animation that begins when its cheapest
+<p>The maze below is an SVG with no script in it. Each cell is an animation that begins when its cheapest
 neighbour's begins, plus the cost of stepping onto it, so the browser's animation scheduler settles the
-cells in order of distance. The wave you see is that order. When it reaches the exit, a trace runs back
-along the winning passages and lights every cheapest route in gold.</p>
-<object data="maze.svg" type="image/svg+xml" aria-label="A maze; a coloured wave spreads from S, and a gold route then appears from E back to S"></object>
-<p class="muted">Darker cells cost more to cross. Reload to run it again.
-<a href="https://github.com/fMindstormer/svgrace">How it works</a></p>
-</main></body></html>
+cells in order of distance. The wave you see is that order. When it reaches E, a trace runs back along
+the winning passages and lights every cheapest route in gold.</p>
+
+<div class="stage" id="stage">
+  <object id="player" data="maze.svg" type="image/svg+xml" aria-label="A maze; a coloured wave spreads from S, and a gold route then appears from E back to S"></object>
+</div>
+<p class="status" id="status" aria-live="polite">Darker cells cost more to cross. Reload to run it again.</p>
+
+<div class="controls js-only" id="play-controls">
+  <button id="edit" class="primary">Draw your own</button>
+  <button id="again">Run again</button>
+  <a class="button" id="download" href="maze.svg" download="maze.svg">Download this SVG</a>
+</div>
+<div class="controls js-only" id="edit-controls" hidden>
+  <div class="seg" role="radiogroup" aria-label="What a tap changes">
+    <label><input type="radio" name="tool" value="walls" checked><span>Walls</span></label>
+    <label><input type="radio" name="tool" value="terrain"><span>Terrain</span></label>
+  </div>
+  <label class="field">Size <select id="size">
+    <option value="12x8">12 × 8</option><option value="16x11">16 × 11</option><option value="24x16" selected>24 × 16</option>
+  </select></label>
+  <label class="field">Loops <select id="loops">
+    <option value="0">none</option><option value="0.15" selected>some</option><option value="0.3">many</option>
+  </select></label>
+  <button id="shuffle">New maze</button>
+  <button id="run" class="primary">Run it</button>
+</div>
+
+<p class="muted">The page builds the SVG in your browser and reads its answer afterwards; the SVG itself has
+no script, and you can download it and open it anywhere. <a href="https://github.com/fMindstormer/svgrace">How it works</a></p>
+</main>
+<script src="svgrace.js"></script>
+<script>
+  document.documentElement.classList.add("js");
+  const $ = id => document.getElementById(id);
+  const TICK = 0.12, CELL = 18, MARGIN = 10, NS = "http://www.w3.org/2000/svg";
+  const TITLE = "A maze that finds its cheapest route with animation timing alone";
+  const LABEL = "A maze; a coloured wave spreads from S, and a gold route then appears from E back to S";
+  let seed = 3, edited = false, url = null, watcher = null, stroke = null;
+  let m = svgrace.generate(24, 16, seed, 0.15);   // the maze in maze.svg, which examples/build.py writes
+  const editor = document.createElementNS(NS, "svg");
+  editor.id = "editor";
+  editor.setAttribute("role", "img");
+  editor.setAttribute("aria-label", "The maze, to edit: tap the edge between two cells, or a cell");
+
+  function status(text, kind = "") {
+    $("status").textContent = text;
+    $("status").className = "status " + kind;
+  }
+
+  function fit() {
+    const w = m.width * CELL + 2 * MARGIN, h = m.height * CELL + 2 * MARGIN;
+    $("stage").style.aspectRatio = `${w} / ${h}`;
+    return [w, h];
+  }
+
+  // Read the race from the SVG, which knows nothing about this page: when S and E were reached, and
+  // which cells the trace lit. Then compare with Dijkstra, run here.
+  function watch(obj) {
+    clearInterval(watcher);
+    const maze = m, {cells, total} = svgrace.shortestPathCells(maze);
+    const end = 10 * TICK + TICK * (total + 2) + 0.6 + cells.size * 0.1 + 1.5;   // the trace has certainly finished
+    let r0 = null, r1 = null;
+    status("Racing: the orange front is the set of cells the scheduler is settling.");
+    watcher = setInterval(() => {
+      const doc = obj.contentDocument, root = doc && doc.querySelector("svg");
+      if (!root || !root.getCurrentTime) return;
+      const st = id => { try { return doc.getElementById(id).getStartTime(); } catch (e) { return null; } };
+      r0 ??= st("R" + maze.start);   // read while active: some browsers stop answering once an animation ends
+      r1 ??= st("R" + maze.exit);
+      if (root.getCurrentTime() < end) return;
+      clearInterval(watcher);
+      const lit = [...Array(maze.cells).keys()].filter(i => st("T" + i) !== null);
+      const ticks = r0 === null || r1 === null ? null : Math.round((r1 - r0) / TICK);
+      if (ticks === total && lit.length === cells.size && lit.every(i => cells.has(i))) {
+        status(`The SVG reached E ${ticks} ticks after S, the cheapest cost, and lit the ${lit.length} cells on the `
+               + "cheapest routes. Dijkstra, run by this page, agrees.", "ok");
+      } else {
+        status(`The SVG reached E ${ticks ?? "never"} ticks after S and lit ${lit.length} cells; Dijkstra says the cheapest `
+               + `cost is ${total}, over ${cells.size} cells. This browser computed it differently. In a background `
+               + "tab, the clock's snaps can miss their tick; run it again with the tab in front.", "bad");
+      }
+    }, 250);
+  }
+
+  function play(src) {
+    const obj = document.createElement("object");
+    obj.type = "image/svg+xml";
+    obj.data = src;
+    obj.setAttribute("aria-label", LABEL);
+    fit();
+    $("stage").replaceChildren(obj);
+    $("download").href = src;
+    $("play-controls").hidden = false;
+    $("edit-controls").hidden = true;
+    watch(obj);
+  }
+
+  function draw() {
+    const [w, h] = fit(), P = svgrace.PALETTE, W = m.width;
+    editor.setAttribute("viewBox", `0 0 ${w} ${h}`);
+    const out = [`<rect width="${w}" height="${h}" fill="${svgrace.WALL}"/>`], lines = [];
+    for (let i = 0; i < m.cells; i++) {
+      const [x, y] = svgrace.xy(m, i), px = MARGIN + x * CELL, py = MARGIN + y * CELL;
+      out.push(`<rect x="${px}" y="${py}" width="${CELL}" height="${CELL}" fill="${P[m.cost[i]]}"/>`);
+      if (x + 1 < W && !svgrace.isOpen(m, i, i + 1)) lines.push(`M${px + CELL} ${py}v${CELL}`);
+      if (y + 1 < m.height && !svgrace.isOpen(m, i, i + W)) lines.push(`M${px} ${py + CELL}h${CELL}`);
+    }
+    lines.push(`M${MARGIN} ${MARGIN}h${W * CELL}v${m.height * CELL}h${-W * CELL}z`);
+    out.push(`<path d="${lines.join("")}" stroke="${svgrace.WALL}" stroke-width="3" stroke-linecap="square" fill="none"/>`);
+    for (const [i, label] of [[m.start, "S"], [m.exit, "E"]]) {
+      const [x, y] = svgrace.xy(m, i);
+      out.push(`<text x="${MARGIN + x * CELL + CELL / 2}" y="${MARGIN + y * CELL + CELL * 0.72}" font-family="sans-serif" `
+               + `font-size="11" font-weight="bold" text-anchor="middle" fill="${svgrace.WALL}">${label}</text>`);
+    }
+    editor.innerHTML = out.join("");
+    const reachable = svgrace.dijkstra(m, m.start)[m.exit] < Infinity;
+    $("run").disabled = !reachable;
+    const origin = edited ? "Your maze." : `Seed ${seed}: the same maze as <code>python -m svgrace build ${m.width} ${m.height} `
+      + `--seed ${seed} --loops ${$("loops").value} --tick ${TICK}</code>.`;
+    if (!reachable) status("E can't be reached from S: open a wall between them.", "bad");
+    else {
+      $("status").innerHTML = (tool() === "walls" ? "Tap the edge between two cells to open or close it, or drag along several. "
+        : "Tap or drag to set what cells cost to cross: light 1, middle 2, dark 3. ") + origin;
+      $("status").className = "status";
+    }
+  }
+
+  const tool = () => document.querySelector("input[name=tool]:checked").value;
+
+  function edit() {
+    clearInterval(watcher);
+    $("stage").replaceChildren(editor);
+    $("play-controls").hidden = true;
+    $("edit-controls").hidden = false;
+    draw();
+  }
+
+  function regenerate() {
+    const [w, h] = $("size").value.split("x").map(Number);
+    m = svgrace.generate(w, h, seed, Number($("loops").value));
+    edited = false;
+    draw();
+  }
+
+  // The cell under the pointer, the neighbour across its nearest edge (null at the border), and how far
+  // that edge is, in cells.
+  function at(ev) {
+    const p = new DOMPoint(ev.clientX, ev.clientY).matrixTransform(editor.getScreenCTM().inverse());
+    const fx = (p.x - MARGIN) / CELL, fy = (p.y - MARGIN) / CELL, x = Math.floor(fx), y = Math.floor(fy);
+    if (x < 0 || y < 0 || x >= m.width || y >= m.height) return null;
+    const u = fx - x, v = fy - y;
+    const [near, dx, dy] = [[1 - u, 1, 0], [u, -1, 0], [1 - v, 0, 1], [v, 0, -1]].sort((a, b) => a[0] - b[0])[0];
+    const nx = x + dx, ny = y + dy, inside = nx >= 0 && ny >= 0 && nx < m.width && ny < m.height;
+    return {i: y * m.width + x, other: inside ? ny * m.width + nx : null, near};
+  }
+
+  function apply(a, first) {
+    if ("open" in stroke) {
+      if (a.other === null || (!first && a.near > 0.25)) return;   // dragging changes only edges it passes close to
+      const k = svgrace.key(m, a.i, a.other);
+      if (m.passages.has(k) === stroke.open) return;
+      stroke.open ? m.passages.add(k) : m.passages.delete(k);
+    } else {
+      if (a.i === m.start || m.cost[a.i] === stroke.cost) return;
+      m.cost[a.i] = stroke.cost;
+    }
+    edited = true;
+    draw();
+  }
+
+  editor.addEventListener("pointerdown", ev => {
+    const a = at(ev);
+    if (!a) return;
+    if (tool() === "walls") {
+      if (a.other === null) return;
+      stroke = {open: !svgrace.isOpen(m, a.i, a.other)};
+    } else {
+      if (a.i === m.start) return;
+      stroke = {cost: m.cost[a.i] % 3 + 1};
+    }
+    editor.setPointerCapture(ev.pointerId);
+    apply(a, true);
+  });
+  editor.addEventListener("pointermove", ev => { const a = stroke && at(ev); if (a) apply(a, false); });
+  for (const type of ["pointerup", "pointercancel"]) editor.addEventListener(type, () => { stroke = null; });
+
+  $("edit").onclick = edit;
+  $("again").onclick = () => play($("download").getAttribute("href"));
+  $("run").onclick = () => {
+    if (url) URL.revokeObjectURL(url);
+    url = URL.createObjectURL(new Blob([svgrace.compile(m, {tick: TICK, title: TITLE}).svg], {type: "image/svg+xml"}));
+    play(url);
+  };
+  $("shuffle").onclick = () => { seed = Math.floor(Math.random() * 10000); regenerate(); };
+  $("size").onchange = $("loops").onchange = regenerate;
+  for (const input of document.querySelectorAll("input[name=tool]")) input.onchange = draw;
+  watch($("player"));
+</script>
+</body></html>
