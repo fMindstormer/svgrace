@@ -36,7 +36,10 @@ def grid(k):
 
 
 def maze(w, h, loops, timing):
-    return compile_svg(generate(w, h, 0, loops=loops), timing=timing,
+    """The maze in the form the report measured and attaches, with each cell's timing on the cell. svgrace now
+    puts it on one invisible element (hoist=True), which Chromium loads about 1.6 times as slowly when the
+    maze has loops; results/maze-hoist.txt has both."""
+    return compile_svg(generate(w, h, 0, loops=loops), timing=timing, hoist=False,
                        title=f"A {w}x{h} maze, {timing} timing")[0]
 
 

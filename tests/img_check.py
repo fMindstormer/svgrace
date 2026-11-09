@@ -8,7 +8,9 @@ from playwright.sync_api import sync_playwright
 from svgrace import generate, compile_align, compile_svg, random_pair, shortest_path_cells
 from svgrace.check import duration, expected_align, finished
 
-def main(w=24, h=16, seeds=(0, 1, 2), tick=0.1, timing="syncbase", loops=0.0, tag="img", engine="chromium", align=False):
+def main(w=24, h=16, seeds=(0, 1, 2), tick=0.1, timing="syncbase", loops=0.0, tag="img", engine="chromium", align=False,
+         hoist=None):
+    hoisted = {} if hoist is None else {"hoist": hoist}    # None: the compiler's default
     root = Path(tempfile.mkdtemp())
     class Quiet(http.server.SimpleHTTPRequestHandler):
         def log_message(self, *a): pass
@@ -22,7 +24,7 @@ def main(w=24, h=16, seeds=(0, 1, 2), tick=0.1, timing="syncbase", loops=0.0, ta
         for seed in seeds:
             if align:
                 s1, s2 = random_pair(w, h, seed)
-                svg, info = compile_align(s1, s2, tick=tick, timing=timing)
+                svg, info = compile_align(s1, s2, tick=tick, timing=timing, **hoisted)
                 dist, path = expected_align(s1, s2, info)
                 wait, c = finished(dist, path, info), info["cell"]
                 where = lambda k: divmod(k, len(s2) + 1)
@@ -30,7 +32,7 @@ def main(w=24, h=16, seeds=(0, 1, 2), tick=0.1, timing="syncbase", loops=0.0, ta
                 spots = [(10 + (j + 1) * c + c - 4, 10 + (i + 1) * c + 4) for i, j in map(where, range(len(dist)))]
             else:
                 m = generate(w, h, seed, loops=loops)
-                svg, info = compile_svg(m, tick=tick, timing=timing)
+                svg, info = compile_svg(m, tick=tick, timing=timing, **hoisted)
                 path, total = shortest_path_cells(m)
                 wait, where = duration(m, info), m.xy
                 # near the corner: clear of the walls (1.5 px into the cell) and of the S and E labels, whose
@@ -67,5 +69,7 @@ if __name__ == "__main__":
     ap.add_argument("--loops", type=float, default=0.0); ap.add_argument("--tick", type=float, default=0.1)
     ap.add_argument("--size", default="24x16"); ap.add_argument("--seeds", type=int, default=3)
     ap.add_argument("--align", action="store_true")
+    ap.add_argument("--hoist", choices=["on", "off"], help="the reach and trace timing on one invisible element (default: the compiler's)")
     a = ap.parse_args(); w, h = map(int, a.size.split("x"))
-    sys.exit(0 if main(w, h, range(a.seeds), a.tick, a.timing, a.loops, a.tag, a.engine, a.align) else 1)
+    sys.exit(0 if main(w, h, range(a.seeds), a.tick, a.timing, a.loops, a.tag, a.engine, a.align,
+                       None if a.hoist is None else a.hoist == "on") else 1)

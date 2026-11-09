@@ -1,0 +1,340 @@
+Mazes with each cell's reach and trace timing (R and T) on the one invisible element, ahead of the gates
+(hoist=True, compile_svg's default from this commit on), against the form they were first built in, with R
+and T on the cells (hoist=False). Playwright 1.64.1's Chromium 156 and WebKit 27.2 on one Apple-silicon Mac,
+November 2026. Firefox is missing: Playwright's Firefox (firefox-1555) did not start in the sandbox these
+runs used ("Could not find profile folder", also with HOME and TMPDIR moved to a writable folder).
+In the runs read at load, OK seeds are left out: each failing maze is listed with its problems.
+
+#### 12x9 braid mazes (loops 0.15), syncbase, times read at load
+# python -m svgrace check 12 9 --seeds 30 --timing syncbase --mode paused --engine E --hoist off|on
+# Before these runs, the README's Three engines table had WebKit exact in 3 of 30 of the same mazes, with R
+# and T on the cells, and Chromium and Firefox in 30 of 30.
+== webkit run 1: syncbase, 12x9 braid mazes, times read at load, hoist off
+seed 0: FAIL (0.1 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 102 cells, expected 22: extra [(0, 7), (0, 8), (1, 0), (1, 1), (1, 5)], missing []
+seed 1: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 102 cells, expected 35: extra [(0, 7), (0, 8), (3, 0), (3, 3), (3, 4)], missing []
+seed 2: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 71 cells, expected 29: extra [(0, 1), (0, 2), (0, 3), (0, 4), (0, 5)], missing []
+seed 3: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 67 cells, expected 22: extra [(0, 1), (0, 2), (0, 3), (0, 4), (0, 5)], missing []
+seed 4: FAIL (0.0 s, 108 cells, 692 elements, largest offset from the tick grid 0 ms)
+    traced 26 cells, expected 21: extra [(6, 3), (8, 1), (8, 2), (9, 2), (9, 3)], missing []
+seed 5: FAIL (0.1 s, 108 cells, 692 elements, largest offset from the tick grid 0 ms)
+    traced 107 cells, expected 24: extra [(0, 3), (0, 4), (0, 5), (0, 6), (0, 7)], missing []
+seed 6: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 108 cells, expected 27: extra [(0, 1), (0, 2), (0, 3), (0, 4), (0, 5)], missing []
+seed 7: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 98 cells, expected 26: extra [(1, 0), (2, 0), (2, 1), (2, 2), (3, 0)], missing []
+seed 8: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 62 cells, expected 22: extra [(0, 3), (0, 4), (0, 5), (0, 6), (0, 7)], missing []
+seed 9: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 75 cells, expected 43: extra [(1, 1), (1, 2), (2, 0), (2, 1), (3, 0)], missing []
+seed 10: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 56 cells, expected 28: extra [(0, 1), (0, 2), (1, 6), (1, 7), (2, 6)], missing []
+seed 11: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 108 cells, expected 29: extra [(0, 4), (0, 5), (0, 6), (0, 7), (0, 8)], missing []
+seed 12: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 40 cells, expected 38: extra [(5, 1), (6, 1)], missing []
+seed 13: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 108 cells, expected 30: extra [(0, 3), (0, 4), (0, 5), (0, 6), (0, 7)], missing []
+seed 14: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 85 cells, expected 30: extra [(2, 3), (3, 0), (3, 1), (3, 3), (3, 4)], missing []
+seed 15: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 56 cells, expected 27: extra [(3, 2), (4, 2), (4, 3), (4, 4), (5, 4)], missing []
+seed 16: FAIL (0.0 s, 108 cells, 692 elements, largest offset from the tick grid 0 ms)
+    traced 51 cells, expected 29: extra [(6, 4), (6, 5), (7, 5), (7, 6), (7, 7)], missing []
+seed 17: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 103 cells, expected 26: extra [(0, 5), (0, 6), (1, 0), (1, 1), (1, 2)], missing []
+seed 18: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 90 cells, expected 29: extra [(0, 8), (1, 2), (1, 3), (1, 4), (1, 5)], missing []
+seed 19: FAIL (0.0 s, 108 cells, 692 elements, largest offset from the tick grid 0 ms)
+    traced 64 cells, expected 47: extra [(1, 0), (1, 5), (2, 0), (2, 1), (2, 2)], missing []
+seed 20: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 108 cells, expected 22: extra [(0, 1), (0, 2), (0, 3), (0, 4), (0, 5)], missing []
+seed 21: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 99 cells, expected 28: extra [(0, 4), (0, 5), (0, 6), (0, 7), (0, 8)], missing []
+seed 22: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 100 cells, expected 27: extra [(0, 1), (0, 2), (0, 3), (0, 4), (0, 5)], missing []
+seed 23: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 47 cells, expected 33: extra [(8, 0), (8, 2), (8, 3), (8, 4), (9, 0)], missing []
+seed 24: FAIL (0.0 s, 108 cells, 692 elements, largest offset from the tick grid 0 ms)
+    traced 105 cells, expected 24: extra [(0, 1), (0, 3), (0, 4), (0, 5), (0, 6)], missing []
+seed 25: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 91 cells, expected 24: extra [(0, 6), (0, 7), (0, 8), (1, 6), (1, 7)], missing []
+seed 26: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 100 cells, expected 25: extra [(0, 3), (0, 4), (0, 5), (0, 6), (0, 7)], missing []
+seed 27: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 25 cells, expected 24: extra [(6, 6)], missing []
+seed 28: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 70 cells, expected 44: extra [(0, 2), (0, 3), (1, 1), (1, 2), (1, 3)], missing []
+seed 29: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 78 cells, expected 28: extra [(0, 3), (0, 4), (0, 5), (0, 6), (1, 1)], missing []
+0 of 30 mazes computed exactly (syncbase timing, paused, WebKit 27.2)
+== webkit run 1: syncbase, 12x9 braid mazes, times read at load, hoist on
+30 of 30 mazes computed exactly (syncbase timing, paused, WebKit 27.2)
+== webkit run 2: syncbase, 12x9 braid mazes, times read at load, hoist off
+seed 0: FAIL (0.1 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 102 cells, expected 22: extra [(1, 0), (1, 1), (1, 5), (2, 0), (2, 1)], missing []
+seed 1: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 100 cells, expected 35: extra [(3, 0), (3, 3), (3, 4), (4, 0), (4, 1)], missing []
+seed 2: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 90 cells, expected 29: extra [(0, 1), (0, 2), (0, 3), (0, 4), (0, 5)], missing []
+seed 3: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 104 cells, expected 22: extra [(0, 1), (0, 2), (0, 3), (0, 4), (0, 5)], missing []
+seed 5: FAIL (0.0 s, 108 cells, 692 elements, largest offset from the tick grid 0 ms)
+    traced 88 cells, expected 24: extra [(1, 0), (1, 6), (1, 7), (1, 8), (2, 0)], missing []
+seed 6: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 102 cells, expected 27: extra [(0, 1), (0, 2), (0, 3), (0, 4), (0, 5)], missing []
+seed 7: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 87 cells, expected 26: extra [(3, 2), (3, 3), (3, 4), (3, 5), (3, 6)], missing []
+seed 8: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 84 cells, expected 22: extra [(0, 4), (0, 5), (0, 6), (1, 3), (1, 4)], missing []
+seed 9: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 104 cells, expected 43: extra [(0, 7), (0, 8), (1, 0), (1, 1), (1, 2)], missing []
+seed 10: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 101 cells, expected 28: extra [(0, 5), (0, 6), (0, 7), (0, 8), (1, 5)], missing []
+seed 11: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 95 cells, expected 29: extra [(0, 4), (0, 5), (0, 6), (0, 7), (0, 8)], missing []
+seed 12: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 94 cells, expected 38: extra [(0, 2), (0, 3), (1, 3), (1, 4), (2, 4)], missing []
+seed 13: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 102 cells, expected 30: extra [(0, 3), (0, 4), (0, 5), (0, 6), (0, 7)], missing []
+seed 14: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 100 cells, expected 30: extra [(0, 1), (0, 2), (0, 3), (0, 4), (0, 5)], missing []
+seed 15: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 88 cells, expected 27: extra [(0, 2), (0, 3), (1, 1), (1, 2), (1, 3)], missing []
+seed 16: FAIL (0.0 s, 108 cells, 692 elements, largest offset from the tick grid 0 ms)
+    traced 55 cells, expected 29: extra [(6, 4), (6, 5), (7, 5), (7, 6), (7, 7)], missing []
+seed 17: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 103 cells, expected 26: extra [(0, 5), (0, 6), (0, 7), (0, 8), (1, 0)], missing []
+seed 18: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 108 cells, expected 29: extra [(0, 8), (1, 2), (1, 3), (1, 4), (1, 5)], missing []
+seed 19: FAIL (0.0 s, 108 cells, 692 elements, largest offset from the tick grid 0 ms)
+    traced 91 cells, expected 47: extra [(1, 0), (2, 0), (3, 0), (3, 1), (3, 2)], missing []
+seed 20: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 90 cells, expected 22: extra [(0, 4), (0, 5), (0, 6), (1, 4), (1, 5)], missing []
+seed 22: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 85 cells, expected 27: extra [(0, 1), (0, 2), (0, 3), (0, 4), (0, 5)], missing []
+seed 23: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 96 cells, expected 33: extra [(0, 2), (0, 3), (0, 4), (0, 5), (0, 6)], missing []
+seed 24: FAIL (0.0 s, 108 cells, 692 elements, largest offset from the tick grid 0 ms)
+    traced 108 cells, expected 24: extra [(0, 1), (0, 2), (0, 3), (0, 4), (0, 5)], missing []
+seed 25: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 106 cells, expected 24: extra [(0, 2), (0, 3), (0, 4), (0, 5), (0, 6)], missing []
+seed 26: FAIL (0.1 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 107 cells, expected 25: extra [(0, 1), (0, 2), (0, 3), (0, 4), (0, 5)], missing []
+seed 27: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 81 cells, expected 24: extra [(1, 0), (1, 1), (1, 2), (2, 0), (2, 1)], missing []
+seed 28: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 92 cells, expected 44: extra [(0, 1), (0, 2), (0, 3), (0, 4), (1, 1)], missing []
+seed 29: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 45 cells, expected 28: extra [(4, 3), (5, 0), (5, 1), (5, 3), (6, 0)], missing []
+2 of 30 mazes computed exactly (syncbase timing, paused, WebKit 27.2)
+== webkit run 2: syncbase, 12x9 braid mazes, times read at load, hoist on
+30 of 30 mazes computed exactly (syncbase timing, paused, WebKit 27.2)
+== webkit run 3: syncbase, 12x9 braid mazes, times read at load, hoist off
+seed 0: FAIL (0.1 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 96 cells, expected 22: extra [(0, 8), (1, 5), (1, 8), (2, 0), (2, 2)], missing []
+seed 1: FAIL (0.1 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 100 cells, expected 35: extra [(3, 0), (3, 3), (3, 4), (4, 0), (4, 1)], missing []
+seed 2: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 88 cells, expected 29: extra [(0, 1), (0, 2), (0, 3), (0, 4), (0, 5)], missing []
+seed 3: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 34 cells, expected 22: extra [(1, 1), (1, 2), (1, 3), (2, 4), (9, 3)], missing []
+seed 4: FAIL (0.1 s, 108 cells, 692 elements, largest offset from the tick grid 0 ms)
+    traced 84 cells, expected 21: extra [(0, 2), (0, 3), (0, 4), (0, 5), (0, 6)], missing []
+seed 5: FAIL (0.0 s, 108 cells, 692 elements, largest offset from the tick grid 0 ms)
+    traced 107 cells, expected 24: extra [(0, 3), (0, 4), (0, 5), (0, 6), (0, 7)], missing []
+seed 6: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 79 cells, expected 27: extra [(2, 8), (3, 8), (4, 3), (4, 4), (4, 6)], missing []
+seed 7: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 54 cells, expected 26: extra [(3, 2), (3, 3), (4, 2), (4, 3), (4, 7)], missing []
+seed 8: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 69 cells, expected 22: extra [(5, 3), (5, 4), (5, 5), (5, 6), (6, 3)], missing []
+seed 9: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 44 cells, expected 43: extra [(3, 7)], missing []
+seed 10: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 108 cells, expected 28: extra [(0, 1), (0, 2), (0, 5), (0, 6), (0, 7)], missing []
+seed 11: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 70 cells, expected 29: extra [(0, 4), (0, 5), (1, 0), (1, 1), (1, 4)], missing []
+seed 12: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 82 cells, expected 38: extra [(3, 4), (3, 5), (3, 6), (3, 7), (3, 8)], missing []
+seed 13: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 98 cells, expected 30: extra [(0, 3), (0, 4), (0, 5), (0, 6), (0, 7)], missing []
+seed 14: FAIL (0.1 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 107 cells, expected 30: extra [(0, 1), (0, 2), (0, 3), (0, 4), (0, 5)], missing []
+seed 15: FAIL (0.1 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 83 cells, expected 27: extra [(0, 2), (0, 3), (1, 1), (1, 2), (1, 3)], missing []
+seed 16: FAIL (0.1 s, 108 cells, 692 elements, largest offset from the tick grid 0 ms)
+    traced 63 cells, expected 29: extra [(4, 8), (5, 5), (5, 6), (5, 7), (5, 8)], missing []
+seed 17: FAIL (0.1 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 81 cells, expected 26: extra [(0, 5), (0, 6), (0, 7), (0, 8), (1, 0)], missing []
+seed 18: FAIL (0.1 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 106 cells, expected 29: extra [(0, 8), (1, 2), (1, 3), (1, 4), (1, 5)], missing []
+seed 19: FAIL (0.1 s, 108 cells, 692 elements, largest offset from the tick grid 0 ms)
+    traced 104 cells, expected 47: extra [(0, 8), (1, 0), (1, 5), (1, 6), (2, 0)], missing []
+seed 20: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 46 cells, expected 22: extra [(0, 4), (0, 5), (0, 6), (0, 7), (0, 8)], missing []
+seed 21: FAIL (0.1 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 104 cells, expected 28: extra [(0, 6), (0, 7), (0, 8), (1, 6), (1, 7)], missing []
+seed 22: FAIL (0.1 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 50 cells, expected 27: extra [(6, 0), (7, 0), (8, 0), (8, 1), (9, 0)], missing []
+seed 23: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 36 cells, expected 33: extra [(4, 1), (5, 1), (9, 5)], missing []
+seed 24: FAIL (0.1 s, 108 cells, 692 elements, largest offset from the tick grid 0 ms)
+    traced 105 cells, expected 24: extra [(0, 1), (0, 3), (0, 4), (0, 5), (0, 6)], missing []
+seed 25: FAIL (0.1 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 66 cells, expected 24: extra [(0, 6), (0, 7), (0, 8), (1, 6), (1, 7)], missing []
+seed 26: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 104 cells, expected 25: extra [(0, 1), (0, 2), (0, 3), (0, 4), (0, 5)], missing []
+seed 27: FAIL (0.1 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 32 cells, expected 24: extra [(8, 5), (8, 6), (9, 6), (10, 5), (10, 6)], missing []
+seed 28: FAIL (0.0 s, 108 cells, 694 elements, largest offset from the tick grid 0 ms)
+    traced 89 cells, expected 44: extra [(0, 2), (0, 3), (0, 4), (1, 1), (1, 2)], missing []
+1 of 30 mazes computed exactly (syncbase timing, paused, WebKit 27.2)
+== webkit run 3: syncbase, 12x9 braid mazes, times read at load, hoist on
+30 of 30 mazes computed exactly (syncbase timing, paused, WebKit 27.2)
+== chromium: syncbase, 12x9 braid mazes, times read at load, hoist off
+30 of 30 mazes computed exactly (syncbase timing, paused, Chromium 156.0.8078.4)
+== chromium: syncbase, 12x9 braid mazes, times read at load, hoist on
+30 of 30 mazes computed exactly (syncbase timing, paused, Chromium 156.0.8078.4)
+
+#### why it helps: the same <set>s on the invisible element, moved after all the gates
+# A probe for this run, not committed: compile_svg(m, timing="syncbase", hoist=True), then every
+# <set id="R..."/> and <set id="T..."/> moved from the front of the invisible element's children to the end;
+# seeds 0 to 29, read at load in WebKit like the check above. "cells" is hoist=False, "hoisted" hoist=True.
+run 1, cells: 1 of 30 exact (WebKit 27.2)
+run 1, hoisted: 30 of 30 exact (WebKit 27.2)
+run 1, after: 2 of 30 exact (WebKit 27.2)
+run 2, cells: 5 of 30 exact (WebKit 27.2)
+run 2, hoisted: 30 of 30 exact (WebKit 27.2)
+run 2, after: 4 of 30 exact (WebKit 27.2)
+
+#### the rest of the Three engines checks, in both forms
+# python -m svgrace check 24 16 --seeds 30 --loops 0 --timing syncbase --mode paused --engine E --hoist off|on
+# python -m svgrace check 24 16 --seeds 10 --engine E --hoist off|on
+# python tests/img_check.py --timing syncbase --tag img --engine E --hoist off|on
+# python tests/img_check.py --timing clocked --tag object --loops 0.15 --engine E --hoist off|on
+== chromium: syncbase, 24x16 perfect mazes, times read at load, hoist off
+30 of 30 mazes computed exactly (syncbase timing, paused, Chromium 156.0.8078.4)
+== chromium: syncbase, 24x16 perfect mazes, times read at load, hoist on
+30 of 30 mazes computed exactly (syncbase timing, paused, Chromium 156.0.8078.4)
+== webkit: syncbase, 24x16 perfect mazes, times read at load, hoist off
+30 of 30 mazes computed exactly (syncbase timing, paused, WebKit 27.2)
+== webkit: syncbase, 24x16 perfect mazes, times read at load, hoist on
+30 of 30 mazes computed exactly (syncbase timing, paused, WebKit 27.2)
+== chromium: clocked, 24x16 braid mazes, real time, 0.1 s tick, hoist off
+seed 0: OK (13.0 s, 384 cells, 3652 elements, largest offset from the tick grid 17 ms)
+seed 1: OK (15.0 s, 384 cells, 3652 elements, largest offset from the tick grid 17 ms)
+seed 2: OK (13.9 s, 384 cells, 3652 elements, largest offset from the tick grid 17 ms)
+seed 3: OK (15.2 s, 384 cells, 3652 elements, largest offset from the tick grid 17 ms)
+seed 4: OK (16.5 s, 384 cells, 3652 elements, largest offset from the tick grid 17 ms)
+seed 5: OK (16.5 s, 384 cells, 3652 elements, largest offset from the tick grid 17 ms)
+seed 6: OK (17.3 s, 384 cells, 3652 elements, largest offset from the tick grid 17 ms)
+seed 7: OK (16.3 s, 384 cells, 3652 elements, largest offset from the tick grid 17 ms)
+seed 8: OK (15.4 s, 384 cells, 3652 elements, largest offset from the tick grid 17 ms)
+seed 9: OK (12.6 s, 384 cells, 3652 elements, largest offset from the tick grid 17 ms)
+10 of 10 mazes computed exactly (clocked timing, realtime, Chromium 156.0.8078.4)
+== chromium: clocked, 24x16 braid mazes, real time, 0.1 s tick, hoist on
+seed 0: OK (13.0 s, 384 cells, 4420 elements, largest offset from the tick grid 17 ms)
+seed 1: OK (15.0 s, 384 cells, 4420 elements, largest offset from the tick grid 17 ms)
+seed 2: OK (13.9 s, 384 cells, 4420 elements, largest offset from the tick grid 17 ms)
+seed 3: OK (15.2 s, 384 cells, 4420 elements, largest offset from the tick grid 17 ms)
+seed 4: OK (16.5 s, 384 cells, 4420 elements, largest offset from the tick grid 17 ms)
+seed 5: OK (16.5 s, 384 cells, 4420 elements, largest offset from the tick grid 17 ms)
+seed 6: OK (17.3 s, 384 cells, 4420 elements, largest offset from the tick grid 17 ms)
+seed 7: OK (16.3 s, 384 cells, 4420 elements, largest offset from the tick grid 17 ms)
+seed 8: OK (15.4 s, 384 cells, 4420 elements, largest offset from the tick grid 17 ms)
+seed 9: OK (12.6 s, 384 cells, 4420 elements, largest offset from the tick grid 17 ms)
+10 of 10 mazes computed exactly (clocked timing, realtime, Chromium 156.0.8078.4)
+== webkit: clocked, 24x16 braid mazes, real time, 0.1 s tick, hoist off
+seed 0: OK (13.0 s, 384 cells, 3652 elements, largest offset from the tick grid 25 ms)
+seed 1: OK (15.0 s, 384 cells, 3652 elements, largest offset from the tick grid 25 ms)
+seed 2: OK (13.9 s, 384 cells, 3652 elements, largest offset from the tick grid 30 ms)
+seed 3: OK (15.2 s, 384 cells, 3652 elements, largest offset from the tick grid 26 ms)
+seed 4: OK (16.5 s, 384 cells, 3652 elements, largest offset from the tick grid 27 ms)
+seed 5: OK (16.5 s, 384 cells, 3652 elements, largest offset from the tick grid 25 ms)
+seed 6: OK (17.3 s, 384 cells, 3652 elements, largest offset from the tick grid 27 ms)
+seed 7: OK (16.3 s, 384 cells, 3652 elements, largest offset from the tick grid 23 ms)
+seed 8: OK (15.4 s, 384 cells, 3652 elements, largest offset from the tick grid 24 ms)
+seed 9: OK (12.6 s, 384 cells, 3652 elements, largest offset from the tick grid 25 ms)
+10 of 10 mazes computed exactly (clocked timing, realtime, WebKit 27.2)
+== webkit: clocked, 24x16 braid mazes, real time, 0.1 s tick, hoist on
+seed 0: OK (13.0 s, 384 cells, 4420 elements, largest offset from the tick grid 27 ms)
+seed 1: OK (15.0 s, 384 cells, 4420 elements, largest offset from the tick grid 26 ms)
+seed 2: OK (13.9 s, 384 cells, 4420 elements, largest offset from the tick grid 26 ms)
+seed 3: OK (15.2 s, 384 cells, 4420 elements, largest offset from the tick grid 28 ms)
+seed 4: OK (16.5 s, 384 cells, 4420 elements, largest offset from the tick grid 29 ms)
+seed 5: OK (16.5 s, 384 cells, 4420 elements, largest offset from the tick grid 26 ms)
+seed 6: OK (17.3 s, 384 cells, 4420 elements, largest offset from the tick grid 31 ms)
+seed 7: OK (16.3 s, 384 cells, 4420 elements, largest offset from the tick grid 31 ms)
+seed 8: OK (15.4 s, 384 cells, 4420 elements, largest offset from the tick grid 27 ms)
+seed 9: OK (12.6 s, 384 cells, 4420 elements, largest offset from the tick grid 27 ms)
+10 of 10 mazes computed exactly (clocked timing, realtime, WebKit 27.2)
+== chromium: syncbase 24x16 perfect mazes inside <img>, the README case, hoist off
+seed 0: <img> shows 259 gold cells, cheapest routes cover 259: OK
+seed 1: <img> shows 121 gold cells, cheapest routes cover 121: OK
+seed 2: <img> shows 103 gold cells, cheapest routes cover 103: OK
+3 of 3 syncbase mazes (loops 0.0) drew exactly the cheapest routes inside an <img> (chromium 156.0.8078.4)
+== chromium: clocked 24x16 braid mazes inside <object>, the live page, hoist off
+seed 0: <object> shows 43 gold cells, cheapest routes cover 43: OK
+seed 1: <object> shows 58 gold cells, cheapest routes cover 58: OK
+seed 2: <object> shows 53 gold cells, cheapest routes cover 53: OK
+3 of 3 clocked mazes (loops 0.15) drew exactly the cheapest routes inside an <object> (chromium 156.0.8078.4)
+== chromium: syncbase 24x16 perfect mazes inside <img>, the README case, hoist on
+seed 0: <img> shows 259 gold cells, cheapest routes cover 259: OK
+seed 1: <img> shows 121 gold cells, cheapest routes cover 121: OK
+seed 2: <img> shows 103 gold cells, cheapest routes cover 103: OK
+3 of 3 syncbase mazes (loops 0.0) drew exactly the cheapest routes inside an <img> (chromium 156.0.8078.4)
+== chromium: clocked 24x16 braid mazes inside <object>, the live page, hoist on
+seed 0: <object> shows 43 gold cells, cheapest routes cover 43: OK
+seed 1: <object> shows 58 gold cells, cheapest routes cover 58: OK
+seed 2: <object> shows 53 gold cells, cheapest routes cover 53: OK
+3 of 3 clocked mazes (loops 0.15) drew exactly the cheapest routes inside an <object> (chromium 156.0.8078.4)
+== webkit: syncbase 24x16 perfect mazes inside <img>, the README case, hoist off
+seed 0: <img> shows 259 gold cells, cheapest routes cover 259: OK
+seed 1: <img> shows 121 gold cells, cheapest routes cover 121: OK
+seed 2: <img> shows 103 gold cells, cheapest routes cover 103: OK
+3 of 3 syncbase mazes (loops 0.0) drew exactly the cheapest routes inside an <img> (webkit 27.2)
+== webkit: clocked 24x16 braid mazes inside <object>, the live page, hoist off
+seed 0: <object> shows 43 gold cells, cheapest routes cover 43: OK
+seed 1: <object> shows 58 gold cells, cheapest routes cover 58: OK
+seed 2: <object> shows 53 gold cells, cheapest routes cover 53: OK
+3 of 3 clocked mazes (loops 0.15) drew exactly the cheapest routes inside an <object> (webkit 27.2)
+== webkit: syncbase 24x16 perfect mazes inside <img>, the README case, hoist on
+seed 0: <img> shows 259 gold cells, cheapest routes cover 259: OK
+seed 1: <img> shows 121 gold cells, cheapest routes cover 121: OK
+seed 2: <img> shows 103 gold cells, cheapest routes cover 103: OK
+3 of 3 syncbase mazes (loops 0.0) drew exactly the cheapest routes inside an <img> (webkit 27.2)
+== webkit: clocked 24x16 braid mazes inside <object>, the live page, hoist on
+seed 0: <object> shows 43 gold cells, cheapest routes cover 43: OK
+seed 1: <object> shows 58 gold cells, cheapest routes cover 58: OK
+seed 2: <object> shows 53 gold cells, cheapest routes cover 53: OK
+3 of 3 clocked mazes (loops 0.15) drew exactly the cheapest routes inside an <object> (webkit 27.2)
+
+#### load times: tools/cliff.py's maze rows, written in both forms and timed the way cliff.py times them
+# (from handing the document over until its page answers a script; one process per load, killed at 100 s)
+| File | Timing | chromium hoist off | chromium hoist on | webkit hoist off | webkit hoist on |
+| perfect maze 24×16 (384 cells) | syncbase | 0.04 s | 0.05 s | 0.04 s | 0.05 s |
+| perfect maze 32×20 (640 cells) | syncbase | 0.06 s | 0.06 s | 0.05 s | 0.07 s |
+| braid maze 12×9 (108 cells) | syncbase | 0.09 s | 0.12 s | 0.02 s | 0.02 s |
+| braid maze 14×10 (140 cells) | syncbase | 3.31 s | 5.23 s | 0.03 s | 0.03 s |
+| braid maze 16×11 (176 cells) | syncbase | 69.29 s | **over 100 s** | 0.03 s | 0.02 s |
+| the same maze, clocked | clocked | 0.04 s | 0.03 s | 0.03 s | 0.04 s |
+| braid maze 40×30 (1,200 cells), clocked | clocked | 0.14 s | 0.13 s | 0.15 s | 0.15 s |
+# Chromium 156.0.8078.4, WebKit 27.2
+
+# The braid rows again in Chromium, the two forms alternating, killed at 200 s
+braid maze 12x9, syncbase, Chromium 156.0.8078.4, hoist off: 0.08 s, 0.08 s, 0.08 s, 0.06 s, 0.10 s, 0.08 s
+braid maze 12x9, syncbase, Chromium 156.0.8078.4, hoist on: 0.09 s, 0.11 s, 0.11 s, 0.11 s, 0.09 s, 0.11 s
+braid maze 14x10, syncbase, Chromium 156.0.8078.4, hoist off: 3.08 s, 3.12 s, 3.37 s, 3.34 s, 3.27 s, 3.27 s
+braid maze 14x10, syncbase, Chromium 156.0.8078.4, hoist on: 5.10 s, 5.13 s, 5.23 s, 5.32 s, 5.33 s, 5.23 s
+braid maze 16x11, syncbase, Chromium 156.0.8078.4, hoist off: 69.81 s, 73.55 s
+braid maze 16x11, syncbase, Chromium 156.0.8078.4, hoist on: 111.22 s, 122.64 s
+
+#### the committed examples, after python examples/build.py: the files themselves, read back
+examples/maze-readme.svg (syncbase, paused) in chromium 156.0.8078.4: exact
+examples/maze.svg (clocked, realtime) in chromium 156.0.8078.4: exact
+examples/maze-readme.svg (syncbase, paused) in webkit 27.2: exact
+examples/maze.svg (clocked, realtime) in webkit 27.2: exact

@@ -32,10 +32,12 @@ priority queue would. (timing="syncbase" writes "R5.begin+0.3s" instead, with no
 Chromium resolves such times ahead of the clock at load, at a cost that grows exponentially with the maze,
 unless the nodes come in an order where each follows all its predecessors, as an alignment's can.)
 
-With hoist=True, R and T animate the invisible element too, next to the rest of the timing, and each shape
-shows a copy that begins with them. WebKit's syncbase alignments were then exact in 60 of 60; with R and T
-on the shapes, in 1 to 6 of 30 in each of five runs, its traces lighting extra cells. Alignments are
-hoisted; a maze keeps its published form.
+With hoist=True, the default for both front ends, R and T animate the invisible element too, ahead of the
+rest of the timing, and each shape shows a copy that begins with them. WebKit's syncbase builds were then
+exact: alignments in 60 of 60, 12x9 braid mazes in 150 of 150. With R and T on the shapes (hoist=False), its
+traces lit extra cells: alignments were exact in 1 to 6 of 30 in each of five runs, braid mazes in 0 to 5 of
+30 in each of six; with R and T on the invisible element but after the gates, braid mazes in 2 and 4 of 30.
+Chromium computes the same either way, but loads hoisted syncbase braid mazes about 1.6 times as slowly.
 """
 from html import escape
 
@@ -121,13 +123,13 @@ def finish(parts, info):
 
 
 def compile_svg(m: Maze, tick=0.1, trace_after=0.6, dt=0.05, cell=18, margin=10, trail=6.0, title=None,
-                timing="clocked", start_ticks=10):
+                timing="clocked", start_ticks=10, hoist=True):
     """The maze's SVG text, and the timing parameters the checker needs. Entering a cell costs its terrain."""
     W, H = m.width, m.height
     size_w, size_h = W * cell + 2 * margin, H * cell + 2 * margin
     edges = m.directed_edges()
     marks, gates, info = race(m.cells, edges, [m.cost[i] for _, i in edges], m.start, m.exit, tick, trace_after, dt,
-                              trail, timing, start_ticks)
+                              trail, timing, start_ticks, hoist)
     parts = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {size_w} {size_h}" width="{size_w}" '
              f'height="{size_h}">']
     if title:

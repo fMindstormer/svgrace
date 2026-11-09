@@ -2,7 +2,9 @@
    python -m svgrace check  W H --seeds N [--mode paused|realtime] [--engine chromium|firefox|webkit] [--align]
                                                              compile and verify N random mazes in a browser engine, or
                                                              with --align, N random pairs of strings of lengths W and H
-   python -m svgrace align  A B --out align.svg             compile the edit distance between strings A and B"""
+   python -m svgrace align  A B --out align.svg             compile the edit distance between strings A and B
+   --hoist off                                               any of them in the earlier form, with each cell's
+                                                             reach and trace timing on the cell"""
 import argparse
 import sys
 import time
@@ -24,14 +26,17 @@ def main(argv=None):
     ap.add_argument("--timing", choices=["clocked", "syncbase"], default="clocked")
     ap.add_argument("--engine", choices=["chromium", "firefox", "webkit"], default="chromium")
     ap.add_argument("--align", action="store_true")
+    ap.add_argument("--hoist", choices=["on", "off"], help="the reach and trace timing on one invisible element "
+                    "(default: the compiler's)")
     ap.add_argument("--alphabet", default="ACGT")
     ap.add_argument("--out")
     a = ap.parse_args(argv)
+    hoist = {} if a.hoist is None else {"hoist": a.hoist == "on"}
 
     if a.command == "align":
         s, t = a.args
         out = a.out or "align.svg"
-        svg, timing = compile_align(s, t, tick=a.tick, timing=a.timing,
+        svg, timing = compile_align(s, t, tick=a.tick, timing=a.timing, **hoist,
                                     title=f"The edit distance between {s} and {t}, found by animation timing alone")
         open(out, "w").write(svg)
         cells, total = alignment_cells(s, t)
@@ -42,7 +47,7 @@ def main(argv=None):
     if a.command == "build":
         m = generate(width, height, a.seed, a.loops)
         out = a.out or "maze.svg"
-        svg, timing = compile_svg(m, tick=a.tick, timing=a.timing, title=f"A {width}x{height} maze that finds its own cheapest route")
+        svg, timing = compile_svg(m, tick=a.tick, timing=a.timing, **hoist, title=f"A {width}x{height} maze that finds its own cheapest route")
         open(out, "w").write(svg)
         path, total = shortest_path_cells(m)
         print(f"wrote {out}: {len(svg) / 1024:.1f} KB, {m.cells} cells, {timing['edges']} passages each way, "
@@ -61,13 +66,13 @@ def main(argv=None):
             t = time.time()
             if a.align:
                 s1, s2 = random_pair(width, height, seed, a.alphabet)
-                svg, timing = compile_align(s1, s2, tick=a.tick, timing=a.timing)
+                svg, timing = compile_align(s1, s2, tick=a.tick, timing=a.timing, **hoist)
                 R, T, shown = run_align(page, svg, s1, s2, timing, a.mode)
                 problems = compare_align(s1, s2, timing, R, T, shown)
                 what = f"{s1 or '(empty)'} / {s2 or '(empty)'}, readout {shown}"
             else:
                 m = generate(width, height, seed, a.loops)
-                svg, timing = compile_svg(m, tick=a.tick, timing=a.timing)
+                svg, timing = compile_svg(m, tick=a.tick, timing=a.timing, **hoist)
                 R, T = run(page, svg, m, timing, a.mode)
                 problems = compare(m, timing, R, T)
                 what = f"{m.cells} cells"
