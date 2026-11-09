@@ -101,7 +101,7 @@ behind, so the clock rate is limited by how fast the engine runs frames.
 - **Syncbase resolution is exponential** in the number of alternative routes (table above). Thirty-six
   animations in a 6×6 grid take 12 to 15 s to load, and shown through a plain `<img>` they hold up the
   load of the page around them about as long. Seeking afterwards is instant: the cost is all in resolving
-  the dependency graph at load. A report with these files is drafted in [`upstream/chromium/`](upstream/chromium/).
+  the dependency graph at load. A report is drafted in [`upstream/chromium/`](upstream/chromium/).
 - **A zero-length interval never ends.** An interval whose begin and end are the same time does not exist
   in Chromium, so nothing waiting for its end begins. SMIL 3.0 says such an element still ends and
   "propagate[s] to time dependents", and Firefox and WebKit agree. svgrace's gates never meet an exact

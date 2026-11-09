@@ -2,7 +2,8 @@
 
 Writes the files attached to the report to upstream/chromium/, then times every case in every engine: from
 handing the document over until it has loaded and its page answers a script. Each case runs in its own
-process and is killed at the limit, because a page stuck in the cliff does not answer anything.
+process and is killed at the limit, because a page stuck in the cliff does not answer anything. The slow
+files are not committed (see .gitignore): GitHub's file view would freeze the tab of anyone who opens one.
 
   python tools/cliff.py [limit in seconds, default 100]
 """

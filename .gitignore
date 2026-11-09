@@ -6,3 +6,8 @@ __pycache__/
 /maze.svg
 # left behind by tools/record.py if a recording is interrupted
 examples/_rec.html
+# test cases that freeze a Chromium tab for seconds to minutes; GitHub's file view would show them to
+# anyone who clicks one, so tools/cliff.py writes them locally instead
+upstream/chromium/grid-6.svg
+upstream/chromium/grid-7.svg
+upstream/chromium/maze-16x11-syncbase.svg
