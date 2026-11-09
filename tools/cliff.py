@@ -36,7 +36,10 @@ def grid(k):
 
 
 def maze(w, h, loops, timing):
-    return compile_svg(generate(w, h, 0, loops=loops), timing=timing,
+    """The maze in the form the report measured and attaches, with each cell's timing on the cell. svgrace now
+    puts it on one invisible element (hoist=True), which Chromium loads about 1.6 times as slowly when the
+    maze has loops; results/maze-hoist.txt has both."""
+    return compile_svg(generate(w, h, 0, loops=loops), timing=timing, hoist=False,
                        title=f"A {w}x{h} maze, {timing} timing")[0]
 
 
@@ -68,6 +71,22 @@ def one(engine, path):
         print(f"{time.time() - t:.3f} {b.version}")
 
 
+def timed(engine, path, limit, versions):
+    """The load time of one file in one engine, as a table cell, in a process of its own."""
+    pr = subprocess.Popen([sys.executable, "-B", __file__, "--one", engine, str(path)],
+                          stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, start_new_session=True)
+    try:
+        got, err = pr.communicate(timeout=limit)
+        seconds, versions[engine] = got.split()
+        return f"{float(seconds):.2f} s"
+    except subprocess.TimeoutExpired:
+        os.killpg(pr.pid, signal.SIGKILL)
+        pr.communicate()
+        return f"**over {limit:.0f} s**"
+    except ValueError:
+        return "error: " + err.strip().splitlines()[-1][:80]
+
+
 def main(limit=100.0):
     out = ROOT / "upstream" / "chromium"
     out.mkdir(parents=True, exist_ok=True)
@@ -79,18 +98,7 @@ def main(limit=100.0):
     times, versions = {}, {}
     for engine in ENGINES:
         for i, (label, *_) in enumerate(CASES):
-            pr = subprocess.Popen([sys.executable, "-B", __file__, "--one", engine, str(tmp / f"{i}.svg")],
-                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, start_new_session=True)
-            try:
-                got, err = pr.communicate(timeout=limit)
-                seconds, versions[engine] = got.split()
-                times[engine, i] = f"{float(seconds):.2f} s"
-            except subprocess.TimeoutExpired:
-                os.killpg(pr.pid, signal.SIGKILL)
-                pr.communicate()
-                times[engine, i] = f"**over {limit:.0f} s**"
-            except ValueError:
-                times[engine, i] = "error: " + err.strip().splitlines()[-1][:80]
+            times[engine, i] = timed(engine, tmp / f"{i}.svg", limit, versions)
             print(f"{engine} {label}: {times[engine, i]}", file=sys.stderr, flush=True)
     print("| File | Timing | " + " | ".join(f"{ENGINES[e]} {versions.get(e, '')}" for e in ENGINES) + " |")
     print("|---|---|" + "---|" * len(ENGINES))

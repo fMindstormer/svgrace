@@ -20,6 +20,8 @@ jobs:
         run: pytest -q tests
       - name: Syncbase mazes inside a plain <img>, the way the README shows one
         run: python tests/img_check.py --timing syncbase --tag img
+      - name: Syncbase alignments inside a plain <img>, the same way
+        run: python tests/img_check.py --align --size 12x12 --timing syncbase --tag img
       - name: The committed examples are what examples/build.py writes
         run: |
           python examples/build.py

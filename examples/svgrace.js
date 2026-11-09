@@ -167,7 +167,7 @@ const svgrace = (() => {
   const pyFloat = v => Number.isInteger(v) ? `${v}.0` : `${v}`;   // how Python prints a float
 
   // compile_svg(m, timing="clocked") in svgrace/compile.py, which explains the machine
-  function compile(m, {tick = 0.1, traceAfter = 0.6, dt = 0.05, cell = 18, margin = 10, trail = 6.0, title = null, startTicks = 10} = {}) {
+  function compile(m, {tick = 0.1, traceAfter = 0.6, dt = 0.05, cell = 18, margin = 10, trail = 6.0, title = null, startTicks = 10, hoist = true} = {}) {
     const W = m.width, H = m.height, sizeW = W * cell + 2 * margin, sizeH = H * cell + 2 * margin;
     const edges = directedEdges(m), into = [], outOf = [];
     for (let i = 0; i < m.cells; i++) { into.push([]); outOf.push([]); }
@@ -175,15 +175,23 @@ const svgrace = (() => {
     const parts = [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${sizeW} ${sizeH}" width="${sizeW}" height="${sizeH}">`];
     if (title) parts.push(`<title>${title}</title>`);
     parts.push(`<rect width="${sizeW}" height="${sizeH}" fill="${WALL}"/>`);
+    // R and T: with hoist, on the invisible element ahead of the gates, and each cell shows copies that begin with them
+    const g = [];
     for (let i = 0; i < m.cells; i++) {
-      const [x, y] = xy(m, i), px = margin + x * cell, py = margin + y * cell;
-      const begin = i === m.start ? `${fmt(startTicks * tick)}s` : `S${i}.endEvent`;
-      const tbegin = i === m.exit ? `R${i}.beginEvent+${fmt(traceAfter)}s`
+      const [x, y] = xy(m, i);
+      let begin = i === m.start ? `${fmt(startTicks * tick)}s` : into[i].length ? `S${i}.endEvent` : "indefinite";
+      let tbegin = i === m.exit ? `R${i}.beginEvent+${fmt(traceAfter)}s`
         : outOf[i].filter(([, k]) => k !== m.start).map(([e]) => `X${e}.endEvent`).join("; ") || "indefinite";
-      parts.push(`<rect x="${px}" y="${py}" width="${cell}" height="${cell}" fill="${PALETTE[m.cost[i]]}">`
-        + `<animate id="R${i}" attributeName="fill" values="${TRAIL}" keyTimes="0;0.06;0.35;1" `
+      let r = `id="R${i}" `, t = `id="T${i}" `;
+      if (hoist) {
+        g.push(`<set ${r}attributeName="x" to="0" begin="${begin}" restart="never"/>`
+          + `<set ${t}attributeName="x" to="0" begin="${tbegin}" restart="never"/>`);
+        [r, t, begin, tbegin] = ["", "", `R${i}.beginEvent`, `T${i}.beginEvent`];
+      }
+      parts.push(`<rect x="${margin + x * cell}" y="${margin + y * cell}" width="${cell}" height="${cell}" fill="${PALETTE[m.cost[i]]}">`
+        + `<animate ${r}attributeName="fill" values="${TRAIL}" keyTimes="0;0.06;0.35;1" `
         + `dur="${fmt(trail)}s" fill="freeze" begin="${begin}" restart="never"/>`
-        + `<set id="T${i}" attributeName="fill" to="${PATH}" begin="${tbegin}" restart="never"/></rect>`);
+        + `<set ${t}attributeName="fill" to="${PATH}" begin="${tbegin}" restart="never"/></rect>`);
     }
     const lines = [];
     for (let i = 0; i < m.cells; i++) {
@@ -199,7 +207,7 @@ const svgrace = (() => {
         + `font-family="sans-serif" font-size="${(cell * 0.62).toFixed(0)}" font-weight="bold" `
         + `text-anchor="middle" fill="${WALL}">${label}</text>`);
     }
-    const g = [`<animate id="CLK" attributeName="y" values="0;0" dur="${fmt(tick)}s" begin="0s" repeatCount="indefinite"/>`];
+    g.push(`<animate id="CLK" attributeName="y" values="0;0" dur="${fmt(tick)}s" begin="0s" repeatCount="indefinite"/>`);
     for (let i = 0; i < m.cells; i++) {
       if (i === m.start || !into[i].length) continue;
       g.push(`<set id="M${i}" attributeName="x" to="0" begin="${into[i].map(([, j]) => `R${j}.beginEvent`).join("; ")}" restart="never"/>`);
