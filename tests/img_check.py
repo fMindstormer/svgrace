@@ -4,8 +4,8 @@ reach. After the race, the pixels must show gold on exactly the cells that lie o
 import functools, http.server, sys, tempfile, threading, time
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from playwright.sync_api import sync_playwright
 from svgrace import generate, compile_align, compile_svg, random_pair, shortest_path_cells
+from svgrace.browser import ENGINES, launch
 from svgrace.check import duration, expected_align, finished
 
 def main(w=24, h=16, seeds=(0, 1, 2), tick=0.1, timing="syncbase", loops=0.0, tag="img", engine="chromium", align=False,
@@ -18,8 +18,7 @@ def main(w=24, h=16, seeds=(0, 1, 2), tick=0.1, timing="syncbase", loops=0.0, ta
     srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     ok = 0
-    with sync_playwright() as p:
-        b = getattr(p, engine).launch()
+    with launch(engine) as b:
         version = b.version
         for seed in seeds:
             if align:
@@ -57,7 +56,6 @@ def main(w=24, h=16, seeds=(0, 1, 2), tick=0.1, timing="syncbase", loops=0.0, ta
             ok += good
             print(f"seed {seed}: <{tag}> shows {len(gold)} gold cells, cheapest {'alignments' if align else 'routes'} cover {len(path)}: {'OK' if good else 'MISMATCH'}"
                   + ("" if good else f"\n    missing {sorted(where(i) for i in path - gold)[:5]}, extra {sorted(where(i) for i in gold - path)[:5]}"))
-        b.close()
     what = f"alignments of {w} and {h} letters" if align else f"mazes (loops {loops})"
     print(f"{ok} of {len(seeds)} {timing} {what} drew exactly the cheapest {'alignments' if align else 'routes'} inside an <{tag}> ({engine} {version})")
     return ok == len(seeds)
@@ -65,7 +63,7 @@ def main(w=24, h=16, seeds=(0, 1, 2), tick=0.1, timing="syncbase", loops=0.0, ta
 if __name__ == "__main__":
     import argparse
     ap = argparse.ArgumentParser()
-    ap.add_argument("--timing", default="syncbase"); ap.add_argument("--tag", default="img"); ap.add_argument("--engine", default="chromium")
+    ap.add_argument("--timing", default="syncbase"); ap.add_argument("--tag", default="img"); ap.add_argument("--engine", choices=list(ENGINES), default="chromium")
     ap.add_argument("--loops", type=float, default=0.0); ap.add_argument("--tick", type=float, default=0.1)
     ap.add_argument("--size", default="24x16"); ap.add_argument("--seeds", type=int, default=3)
     ap.add_argument("--align", action="store_true")

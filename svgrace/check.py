@@ -4,14 +4,12 @@ Dijkstra for a maze, the edit-distance table for an alignment.
 The SVG has no script. The checker only reads when each timed element began
 (SVGAnimationElement.getStartTime). Clocked SVGs run in real time; their answers are counted in clock
 ticks from the moment the start cell was reached. The engine is Chromium, Firefox or WebKit, as
-Playwright builds them.
+Playwright builds them, or Safari through safaridriver (browser.py).
 """
 import time
 
 from .align import alignment_cells, edit_distance, prefix_distances
 from .maze import dijkstra, shortest_path_cells
-
-ENGINES = {"chromium": "Chromium", "firefox": "Firefox", "webkit": "WebKit"}
 
 READ = """n => {
   const t = id => { const el = document.getElementById(id);

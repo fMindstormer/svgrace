@@ -1,5 +1,5 @@
 """python -m svgrace build  W H --seed S --out maze.svg     compile a random maze
-   python -m svgrace check  W H --seeds N [--mode paused|realtime] [--engine chromium|firefox|webkit] [--align]
+   python -m svgrace check  W H --seeds N [--mode paused|realtime] [--engine chromium|firefox|webkit|safari] [--align]
                                                              compile and verify N random mazes in a browser engine, or
                                                              with --align, N random pairs of strings of lengths W and H
    python -m svgrace align  A B --out align.svg             compile the edit distance between strings A and B
@@ -10,6 +10,7 @@ import sys
 import time
 
 from .align import alignment_cells, random_pair
+from .browser import ENGINES
 from .compile import compile_align, compile_svg
 from .maze import generate, shortest_path_cells
 
@@ -24,7 +25,7 @@ def main(argv=None):
     ap.add_argument("--tick", type=float, default=0.1)
     ap.add_argument("--mode", choices=["paused", "realtime"], default="realtime")
     ap.add_argument("--timing", choices=["clocked", "syncbase"], default="clocked")
-    ap.add_argument("--engine", choices=["chromium", "firefox", "webkit"], default="chromium")
+    ap.add_argument("--engine", choices=list(ENGINES), default="chromium")
     ap.add_argument("--align", action="store_true")
     ap.add_argument("--hoist", choices=["on", "off"], help="the reach and trace timing on one invisible element "
                     "(default: the compiler's)")
@@ -55,11 +56,10 @@ def main(argv=None):
               f"({len(path)} cells on cheapest routes)")
         return 0
 
-    from playwright.sync_api import sync_playwright
-    from .check import ENGINES, compare, compare_align, run, run_align
+    from .browser import launch
+    from .check import compare, compare_align, run, run_align
     bad = 0
-    with sync_playwright() as p:
-        browser = getattr(p, a.engine).launch()
+    with launch(a.engine) as browser:
         version = browser.version
         for seed in range(a.seed, a.seed + a.seeds):
             page = browser.new_page()
@@ -80,7 +80,6 @@ def main(argv=None):
             bad += bool(problems)
             print(f"seed {seed}: {'OK' if not problems else 'FAIL'} ({time.time() - t:.1f} s, {what}, {timing['elements']} elements, largest offset from the tick grid {timing.get('worst_offset', 0) * 1000:.0f} ms)"
                   + "".join(f"\n    {x}" for x in problems[:6]))
-        browser.close()
     print(f"{a.seeds - bad} of {a.seeds} {'alignments' if a.align else 'mazes'} computed exactly ({a.timing} timing, {a.mode}, {ENGINES[a.engine]} {version})")
     return 1 if bad else 0
 
