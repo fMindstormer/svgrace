@@ -1,9 +1,10 @@
 """Where the three engines agree on the SMIL timing svgrace is built from, and where they do not.
 
-Each probe is a small SVG with no script, run in Playwright's Chromium, Firefox and WebKit, and compared
-with what SMIL 3.0 (https://www.w3.org/TR/SMIL3/smil-timing.html) says it must compute. Times are read
-with getStartTime() from outside the SVG; "none" means the element has no interval (the call threw).
-Like svgrace's own elements, every probe element has restart="never" unless the probe is about restart.
+Each probe is a small SVG with no script, run in Playwright's Chromium, Firefox and WebKit, or in Safari
+(--engines), and compared with what SMIL 3.0 (https://www.w3.org/TR/SMIL3/smil-timing.html) says it must
+compute. Times are read with getStartTime() from outside the SVG; "none" means the element has no interval
+(the call threw). Like svgrace's own elements, every probe element has restart="never" unless the probe is
+about restart.
 
 How each probe is read:
   paused       the clock is paused once the document has loaded: what the engine resolved ahead of time
@@ -12,8 +13,10 @@ How each probe is read:
   chain        an event-based chain is read while it runs
   img          the SVG is shown through <img>, and its colour is read from a screenshot
 
-  python tools/engines.py          prints a Markdown table
+  python tools/engines.py                          prints a Markdown table
+  python tools/engines.py --engines webkit,safari   the same for the engines named (Safari: svgrace/browser.py)
 """
+import argparse
 import functools
 import http.server
 import io
@@ -23,9 +26,8 @@ import threading
 import time
 from pathlib import Path
 
-from playwright.sync_api import sync_playwright
-
-ENGINES = {"chromium": "Chromium", "firefox": "Firefox", "webkit": "WebKit"}
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from svgrace.browser import ENGINES, PLAYWRIGHT, launch  # noqa: E402
 
 
 def svg(*parts):
@@ -172,24 +174,22 @@ def fmt(v):
     return str(int(v)) if isinstance(v, float) else str(v)
 
 
-def main():
+def main(engines=PLAYWRIGHT):
     server = Server()
     results, versions = {}, {}
-    with sync_playwright() as p:
-        for engine in ENGINES:
-            b = getattr(p, engine).launch()
+    for engine in engines:
+        with launch(engine) as b:
             versions[engine] = b.version
             for name, _, kind, text, expr, _ in PROBES:
                 try:
                     results[engine, name] = measure(b, server, kind, text, expr)
                 except Exception as e:
                     results[engine, name] = f"error: {type(e).__name__}"
-            b.close()
-    print("| Probe | SMIL 3.0 | " + " | ".join(f"{ENGINES[e]} {versions[e].split('.')[0]}" for e in ENGINES) + " |")
-    print("|---|---|" + "---|" * len(ENGINES))
+    print("| Probe | SMIL 3.0 | " + " | ".join(f"{ENGINES[e]} {versions[e].split('.')[0]}" for e in engines) + " |")
+    print("|---|---|" + "---|" * len(engines))
     for name, rule, kind, _, _, want in PROBES:
         cells = []
-        for e in ENGINES:
+        for e in engines:
             got = results[e, name]
             if kind == "chain":
                 cells.append(f"{got} ms" if isinstance(got, int) else got)
@@ -200,8 +200,10 @@ def main():
             if wrong:
                 cells[-1] = f"**{cells[-1]}**"
         print(f"| {name} | {rule} | " + " | ".join(cells) + " |")
-    print(f"\nBold: differs from SMIL 3.0. Playwright builds: " + ", ".join(f"{ENGINES[e]} {versions[e]}" for e in ENGINES) + ".")
+    print(f"\nBold: differs from SMIL 3.0. Versions: " + ", ".join(f"{ENGINES[e]} {versions[e]}" for e in engines) + ".")
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--engines", default=",".join(PLAYWRIGHT), help="comma-separated, from " + ", ".join(ENGINES))
+    sys.exit(main(ap.parse_args().engines.split(",")))

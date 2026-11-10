@@ -15,8 +15,8 @@ terrain, on a page with no script. Reload to run it again.
 the scheduler is settling; the gold route is the cheapest way from S to E (darker cells cost more).*
 
 The maze below is the file itself, not a recording. GitHub shows it through a plain `<img>`, where no
-script can run, and the browser computes its route as the page loads (checked in Chromium, Firefox and
-WebKit; reload the page to run it again):
+script can run, and the browser computes its route as the page loads (checked in Chromium, Firefox,
+WebKit and Safari; reload the page to run it again):
 
 ![A maze that solves itself: a wave spreads from S and a gold route appears from E back to S](examples/maze-readme.svg)
 
@@ -123,18 +123,20 @@ GitHub README. `--timing clocked` handles mazes with competing routes, in a page
 
 ## Three engines
 
-The same checks in Playwright's builds of Chromium, Firefox and WebKit, on one Apple-silicon Mac:
+The same checks in Playwright's builds of Chromium, Firefox and WebKit, and in Safari itself, driven
+through safaridriver ([`svgrace/browser.py`](svgrace/browser.py)), on one Apple-silicon Mac:
 
-| Check | Chromium 156 | Firefox 157 | WebKit 27.2 |
-|---|---|---|---|
-| syncbase, 24×16 perfect mazes, times read at load | 30 of 30 | 30 of 30 | 30 of 30 |
-| syncbase, 12×9 braid mazes, times read at load | 30 of 30 | 30 of 30 | **3 of 30** |
-| clocked, 24×16 braid mazes, real time, 0.1 s tick | 10 of 10 | 10 of 10 | 10 of 10 |
-| syncbase inside `<img>`, the README case | 3 of 3 | 3 of 3 | 3 of 3 |
-| clocked inside `<object>`, the live page | 3 of 3 | 3 of 3 | 3 of 3 |
+| Check | Chromium 156 | Firefox 157 | WebKit 27.2 | Safari 27.2 |
+|---|---|---|---|---|
+| syncbase, 24×16 perfect mazes, times read at load | 30 of 30 | 30 of 30 | 30 of 30 | 30 of 30 |
+| syncbase, 12×9 braid mazes, times read at load | 30 of 30 | 30 of 30 | **0 to 3 of 30** | **1 to 4 of 30** |
+| clocked, 24×16 braid mazes, real time, 0.1 s tick | 10 of 10 | 10 of 10 | 10 of 10 | 10 of 10 |
+| syncbase inside `<img>`, the README case | 3 of 3 | 3 of 3 | 3 of 3 | 3 of 3 |
+| clocked inside `<object>`, the live page | 3 of 3 | 3 of 3 | 3 of 3 | 3 of 3 |
 
-The README maze and the live page compute the right answer in all three. WebKit's braid-maze failures are
-all in the trace, which lights cells off the cheapest routes. A winner gate whose end is corrected to
+The README maze and the live page compute the right answer in all of them. WebKit's braid-maze failures are
+all in the trace, which lights cells off the cheapest routes, and how many mazes pass, and which ones,
+changes from run to run (five runs in WebKit, four in Safari). A winner gate whose end is corrected to
 before its begin keeps the interval it had, so its relay fires: in two failing 12×9 mazes, over a hundred
 gates that SMIL closes kept an interval in WebKit, and none did in Chromium. Chromium has the same flaw in
 another document order (probes below), one that svgrace's mazes do not produce.
@@ -142,27 +144,28 @@ another document order (probes below), one that svgrace's mazes do not produce.
 [`tools/engines.py`](tools/engines.py) probes the timing features svgrace uses one at a time, each against
 what SMIL 3.0 requires. Every probe element has `restart="never"`, as svgrace's do:
 
-| Probe | SMIL 3.0 | Chromium 156 | Firefox 157 | WebKit 27.2 |
-|---|---|---|---|---|
-| begin list takes the earliest | `begin="0.3s; 0.1s"` begins at 0.1 s | 0.1 | 0.1 | 0.1 |
-| open cycle | A `0s; B.begin+1s`, B `A.begin+1s`: A at 0, B at 1 | 0, 1 | 0, 1 | 0, 1 |
-| closed cycle | A `B.begin+1s`, B `A.begin+1s`: both unresolved | none, none | none, none | none, none |
-| gate, end after begin | W is 1 s to 1.5 s, X begins at 1.5 | 1.5 | 1.5 | 1.5 |
-| gate, end equals begin | a 0-length interval still ends and "propagate[s] to time dependents": X at 1 | **none** | 1 | 1 |
-| the same, clock running | X at 1 | **none** | 1 | 1 |
-| gate, end before begin | no interval, so X never begins | none | none | none |
-| gate, end corrected to before begin | "the interval must be pruned and all dependent instance times must be removed": X never begins | **0.5, 3** | 0.5, none | **0.5, 3** |
-| the same, elements in another order | X never begins | 0.5, none | 0.5, none | 0.5, none |
-| `restart="never"` while active | `begin="0s; 0.5s"`, 2 s long: at 1 s still the interval from 0 | 0 | 0 | 0 |
-| `restart="never"` after the end | `begin="0s; 3s"`, 1 s long: inactive at 3.5 s, width stays 10 | 10 | 10 | 10 |
-| the same two, after `setCurrentTime()` | a forward seek "should" leave the state playing would: 0, and 10 | 0, 10 | 0, 10 | **0.5, 15** |
-| `restart="always"` while active (control) | the first probe with restart="always": restarted at 0.5 | 0.5 | 0.5 | 0.5 |
-| event-based chain | `prev.beginEvent+0.1s`, 20 hops: an event's time is "the earliest time that the event could be raised" (largest error) | **67 to 100 ms** | **3 to 48 ms** | **28 to 35 ms** |
-| `getStartTime()` after the interval ends | 0.5 s long, read at 1 s: unspecified (SVG 1.1 throws without a "current interval") | 0 | none | 0 |
-| syncbase timing inside `<img>` | SVG Integration: "declarative animation: yes" in an image; the chain turns it red | red | red | red |
-| event-based timing inside `<img>` | the same chain with `beginEvent` | **teal** | red | red |
+| Probe | SMIL 3.0 | Chromium 156 | Firefox 157 | WebKit 27.2 | Safari 27.2 |
+|---|---|---|---|---|---|
+| begin list takes the earliest | `begin="0.3s; 0.1s"` begins at 0.1 s | 0.1 | 0.1 | 0.1 | 0.1 |
+| open cycle | A `0s; B.begin+1s`, B `A.begin+1s`: A at 0, B at 1 | 0, 1 | 0, 1 | 0, 1 | 0, 1 |
+| closed cycle | A `B.begin+1s`, B `A.begin+1s`: both unresolved | none, none | none, none | none, none | none, none |
+| gate, end after begin | W is 1 s to 1.5 s, X begins at 1.5 | 1.5 | 1.5 | 1.5 | 1.5 |
+| gate, end equals begin | a 0-length interval still ends and "propagate[s] to time dependents": X at 1 | **none** | 1 | 1 | 1 |
+| the same, clock running | X at 1 | **none** | 1 | 1 | 1 |
+| gate, end before begin | no interval, so X never begins | none | none | none | none |
+| gate, end corrected to before begin | "the interval must be pruned and all dependent instance times must be removed": X never begins | **0.5, 3** | 0.5, none | **0.5, 3** | **0.5, 3** |
+| the same, elements in another order | X never begins | 0.5, none | 0.5, none | 0.5, none | 0.5, none |
+| `restart="never"` while active | `begin="0s; 0.5s"`, 2 s long: at 1 s still the interval from 0 | 0 | 0 | 0 | 0 |
+| `restart="never"` after the end | `begin="0s; 3s"`, 1 s long: inactive at 3.5 s, width stays 10 | 10 | 10 | 10 | 10 |
+| the same two, after `setCurrentTime()` | a forward seek "should" leave the state playing would: 0, and 10 | 0, 10 | 0, 10 | **0.5, 15** | **0.5, 15** |
+| `restart="always"` while active (control) | the first probe with restart="always": restarted at 0.5 | 0.5 | 0.5 | 0.5 | 0.5 |
+| event-based chain | `prev.beginEvent+0.1s`, 20 hops: an event's time is "the earliest time that the event could be raised" (largest error) | **67 to 100 ms** | **3 to 48 ms** | **28 to 35 ms** | **18 to 21 ms** |
+| `getStartTime()` after the interval ends | 0.5 s long, read at 1 s: unspecified (SVG 1.1 throws without a "current interval") | 0 | none | 0 | 0 |
+| syncbase timing inside `<img>` | SVG Integration: "declarative animation: yes" in an image; the chain turns it red | red | red | red | red |
+| event-based timing inside `<img>` | the same chain with `beginEvent` | **teal** | red | red | red |
 
-Bold: differs from SMIL 3.0. The event-based chain is given over four runs.
+Bold: differs from SMIL 3.0. The event-based chain is given over four runs. On the day of the Safari runs,
+Playwright's WebKit gave 19 to 22 ms for it.
 
 - **Event times.** SMIL defines an event's time as "the earliest time that the event could be raised",
   which would make unclocked event chains exact. None of the three engines does that, so the clock is what
@@ -174,9 +177,16 @@ Bold: differs from SMIL 3.0. The event-based chain is given over four runs.
   while the race runs. Reading too often has its own cost: every half second, reading a 24×16 maze held up
   Firefox's main thread enough that clocked snaps missed their tick; every 2 s it does not.
 
+**Safari.** Safari 27.2 (build 22625.2.8.11.9, on macOS 27.2) matched Playwright's WebKit 27.2 in every
+check, every probe and both web-platform-tests. Its braid-maze traces fail the same way and vary as much
+from run to run, its `setCurrentTime()` restarts `restart="never"` elements, its `getStartTime()` still
+answers after an interval has ended, and it fails the pruned-interval test in the same document order. Its
+event-based chain was off by about as much as Playwright's WebKit on the same day. So the WebKit findings
+here hold for this Safari release on this Mac; other versions, and Safari on iOS, are not tested.
+
 The two clearest disagreements are drafted as [web-platform-tests](upstream/wpt/) for `svg/animations`: a
 zero-length interval must end and propagate (Chromium fails), and a pruned interval must take back the
-times it gave its dependents (Chromium and WebKit fail, in one document order). Firefox passes both.
+times it gave its dependents (Chromium, WebKit and Safari fail, in one document order). Firefox passes both.
 
 ## How it is checked
 
@@ -198,6 +208,7 @@ python -m svgrace check 24 16 --seeds 20                    # clocked, real time
 python -m svgrace check 24 16 --seeds 30 --loops 0 --timing syncbase --mode paused --engine firefox
 python tests/img_check.py --timing syncbase --tag img       # the README case
 python tools/engines.py                                     # the probes, in all three engines
+python tools/engines.py --engines webkit,safari             # and in Safari: see svgrace/browser.py
 python tools/cliff.py                                       # the load times
 python tools/wpt.py                                         # the web-platform-tests drafts
 python -m svgrace build 24 16 --seed 3 --out maze.svg       # make one
@@ -205,9 +216,9 @@ python -m svgrace build 24 16 --seed 3 --out maze.svg       # make one
 
 ## Limits and next steps
 
-- **Three builds on one machine.** The engines are Playwright's builds on an Apple-silicon Mac. Safari,
-  and Chrome and Firefox elsewhere, are not tested; Safari in particular may differ from Playwright's
-  WebKit.
+- **One machine.** The engines are Playwright's builds and Safari 27.2, on one Apple-silicon Mac. Safari
+  matched Playwright's WebKit there. Other Safari versions, Safari on iOS, and Chrome and Firefox as users
+  install them are not tested, and the load times were not measured in Safari.
 - **Mazes are the first program.** The same primitives compute edit distance (race logic's original
   application, DNA alignment) and sorting.
 - **Universality.** With cycles and restarts, the same elements make temporal state machines: a counter

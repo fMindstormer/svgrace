@@ -1,10 +1,11 @@
 """python -m svgrace build  W H --seed S --out maze.svg     compile a random maze
-   python -m svgrace check  W H --seeds N [--mode paused|realtime] [--engine chromium|firefox|webkit]
+   python -m svgrace check  W H --seeds N [--mode paused|realtime] [--engine chromium|firefox|webkit|safari]
                                                              compile and verify N random mazes in a browser engine"""
 import argparse
 import sys
 import time
 
+from .browser import ENGINES
 from .compile import compile_svg
 from .maze import generate, shortest_path_cells
 
@@ -20,7 +21,7 @@ def main(argv=None):
     ap.add_argument("--tick", type=float, default=0.1)
     ap.add_argument("--mode", choices=["paused", "realtime"], default="realtime")
     ap.add_argument("--timing", choices=["clocked", "syncbase"], default="clocked")
-    ap.add_argument("--engine", choices=["chromium", "firefox", "webkit"], default="chromium")
+    ap.add_argument("--engine", choices=list(ENGINES), default="chromium")
     ap.add_argument("--out", default="maze.svg")
     a = ap.parse_args(argv)
 
@@ -34,11 +35,10 @@ def main(argv=None):
               f"({len(path)} cells on cheapest routes)")
         return 0
 
-    from playwright.sync_api import sync_playwright
-    from .check import ENGINES, run, compare
+    from .browser import launch
+    from .check import run, compare
     bad = 0
-    with sync_playwright() as p:
-        browser = getattr(p, a.engine).launch()
+    with launch(a.engine) as browser:
         version = browser.version
         for seed in range(a.seed, a.seed + a.seeds):
             page = browser.new_page()
@@ -51,7 +51,6 @@ def main(argv=None):
             bad += bool(problems)
             print(f"seed {seed}: {'OK' if not problems else 'FAIL'} ({time.time() - t:.1f} s, {m.cells} cells, {timing['elements']} elements, largest offset from the tick grid {timing.get('worst_offset', 0) * 1000:.0f} ms)"
                   + "".join(f"\n    {x}" for x in problems[:6]))
-        browser.close()
     print(f"{a.seeds - bad} of {a.seeds} mazes computed exactly ({a.timing} timing, {a.mode}, {ENGINES[a.engine]} {version})")
     return 1 if bad else 0
 

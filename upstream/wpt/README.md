@@ -5,11 +5,12 @@ directory, for the two clearest disagreements found by [`tools/engines.py`](../.
 quotes the SMIL 3.0 rule it checks. Run them locally in all three engines with
 [`tools/wpt.py`](../../tools/wpt.py).
 
-| Test | Chromium 156 | Firefox 157 | WebKit 27.2 |
-|---|---|---|---|
-| `syncbase-zero-duration-interval-end.html`: from offsets, from syncbases | FAIL, FAIL | PASS, PASS | PASS, PASS |
-| `syncbase-pruned-interval-removes-dependents.html`: chain after, before the gate | FAIL, PASS | PASS, PASS | FAIL, PASS |
+| Test | Chromium 156 | Firefox 157 | WebKit 27.2 | Safari 27.2 |
+|---|---|---|---|---|
+| `syncbase-zero-duration-interval-end.html`: from offsets, from syncbases | FAIL, FAIL | PASS, PASS | PASS, PASS | PASS, PASS |
+| `syncbase-pruned-interval-removes-dependents.html`: chain after, before the gate | FAIL, PASS | PASS, PASS | FAIL, PASS | FAIL, PASS |
 
-The same results in three runs, in Playwright's builds on an Apple-silicon Mac.
+The same results in three runs, in Playwright's builds and in Safari (`python tools/wpt.py --engines
+safari`), on an Apple-silicon Mac.
 
 **Status:** not submitted yet.
