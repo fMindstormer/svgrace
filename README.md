@@ -302,7 +302,7 @@ ways.
 | clocked, 16 and 16 random letters of ACGT, real time, 0.1 s tick | 10 of 10 | 10 of 10 | 10 of 10 |
 | syncbase, 8 and 8 random letters of ACGT, real time, the readout too | 3 of 3 | 3 of 3 | 3 of 3 |
 | syncbase inside `<img>`, the README case | 3 of 3 | 3 of 3 | 3 of 3 |
-| clocked inside `<object>` | 3 of 3 | 3 of 3 | did not finish |
+| clocked inside `<object>` | 3 of 3 | 3 of 3 | 3 of 3 |
 | syncbase, ACGT, with the timing on the cells (three runs) | 30 of 30 each | **1 to 6 of 30** | not run |
 | syncbase, AB, with the timing on the cells (two runs) | 30 of 30 each | **1 or 2 of 30** | not run |
 | syncbase inside `<img>`, with the timing on the cells | 3 of 3 | **0 of 3** | not run |
@@ -311,8 +311,7 @@ With the timing on the cells, WebKit got every time right and every failure was 
 cells off the cheapest alignments; how many failed changed from run to run. Both builds are now exact in
 both engines and in Safari, so `align` keeps the clocked default that `build` has, and `--timing syncbase` writes the
 build that runs inside `<img>`, the one above. Firefox was not run for this section: Playwright's Firefox
-did not start in the sandbox these runs used. In Safari, the `<object>` check did not finish, because
-safaridriver timed out taking its screenshot. The logs are in [`results/align.txt`](results/align.txt)
+did not start in the sandbox these runs used. The logs are in [`results/align.txt`](results/align.txt)
 and, for Safari, [`results/safari-hoist.txt`](results/safari-hoist.txt).
 
 ## How it is checked

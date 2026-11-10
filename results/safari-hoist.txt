@@ -122,3 +122,11 @@ a retry could not start, since Safari was still paired with the stalled WebDrive
 
 ### done
 19:33:07
+
+### rerun, once Safari accepted a new WebDriver session
+### python tests/img_check.py --align --size 12x12 --timing clocked --tag object --engine safari
+19:44:23
+seed 0: <object> shows 13 gold cells, cheapest alignments cover 13: OK
+seed 1: <object> shows 14 gold cells, cheapest alignments cover 14: OK
+seed 2: <object> shows 13 gold cells, cheapest alignments cover 13: OK
+3 of 3 clocked alignments of 12 and 12 letters drew exactly the cheapest alignments inside an <object> (safari 27.2)
